@@ -43,8 +43,8 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
  * @version 2.0, 11/28/2024
  */
 
-@Autonomous(name = "PedroPath_2025_Ver1", group = "Examples")
-public class Pedropath_2025_Ver1 extends OpMode {
+@Autonomous(name = "PedroPath_Red_Ver1", group = "Examples")
+public class Pedropath_Red_Ver1 extends OpMode {
     VisionSubsystem vision;
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -79,29 +79,23 @@ public class Pedropath_2025_Ver1 extends OpMode {
      * Lets assume the Robot is facing the human player and we want to score in the bucket */
 
     /** Start Pose of our robot */
-    private final Pose startPose = new Pose(4.5, 108, Math.toRadians(180) );
+    private final Pose startPose = new Pose(139.5, 108, Math.toRadians(0) );
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(35, 90, Math.toRadians(130));
-    private final Pose scorePose1 = new Pose(40, 90, Math.toRadians(130));
+    private final Pose scorePose = new Pose(109, 90, Math.toRadians(50));
     //private final Pose scorePose = new Pose(19, 111);
 
     /** Lowest (First) Sample from the Spike Mark */
     //private final Pose pickup1Pose = new Pose(23, 128);
-    private final Pose pickup1Pose_lane1 = new Pose(30, 70, Math.toRadians(180));
-    private final Pose pickup2Pose_lane1 = new Pose(15, 70, Math.toRadians(180));
-    private final Pose pickup3Pose_lane1 = new Pose(7, 70, Math.toRadians(180));
+    private final Pose pickup1Pose_lane1 = new Pose(117, 70, Math.toRadians(0));
+    private final Pose pickup2Pose_lane1 = new Pose(120, 70, Math.toRadians(0));
+    private final Pose pickup3Pose_lane1 = new Pose(123, 70, Math.toRadians(0));
 
-    private final Pose pickup1Pose_lane2 = new Pose(30, 40, Math.toRadians(180));
-    private final Pose pickup2Pose_lane2 = new Pose(8, 40, Math.toRadians(180));
-    private final Pose pickup3Pose_lane2 = new Pose(15, 40, Math.toRadians(180));
-
-    private final Pose pickup1Pose_lane3 = new Pose(26, 14, Math.toRadians(180));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
-    private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1, grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2,grabPickup1_lane3,scorePickup2, scorePickup3;
+    private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1, scorePickup2, scorePickup3;
 
 
     /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
@@ -153,53 +147,21 @@ public class Pedropath_2025_Ver1 extends OpMode {
         grabPickup2_lane1 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(pickup1Pose_lane1), new Point(pickup2Pose_lane1)))
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(pickup1Pose_lane1.getHeading(), pickup2Pose_lane1.getHeading())
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1Pose_lane1.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
         grabPickup3_lane1 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(pickup2Pose_lane1), new Point(pickup3Pose_lane1)))
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(pickup2Pose_lane1.getHeading(), pickup3Pose_lane1.getHeading())
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1Pose_lane1.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
 
         /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(pickup3Pose_lane1), new Point(scorePose)))
-                .setLinearHeadingInterpolation(pickup3Pose_lane1.getHeading(), scorePose1.getHeading())
+                .setLinearHeadingInterpolation(pickup3Pose_lane1.getHeading(), scorePose.getHeading())
                 //.setTangentHeadingInterpolation()
-                .build();
-
-        grabPickup1_lane2 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(scorePose1), new Point(pickup1Pose_lane2)))
-                //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane2.getHeading())
-                //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
-                .build();
-        grabPickup2_lane2 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickup1Pose_lane2), new Point(pickup2Pose_lane2)))
-                //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(pickup1Pose_lane2.getHeading(), pickup2Pose_lane2.getHeading())
-                //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
-                .build();
-        grabPickup3_lane2 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickup2Pose_lane2), new Point(pickup3Pose_lane2)))
-                //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(pickup2Pose_lane2.getHeading(), pickup3Pose_lane2.getHeading())
-                //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
-                .build();
-
-        /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        scorePickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pickup3Pose_lane2), new Point(scorePose)))
-                .setLinearHeadingInterpolation(pickup3Pose_lane2.getHeading(), scorePose1.getHeading())
-                //.setTangentHeadingInterpolation()
-                .build();
-        grabPickup1_lane3 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(scorePose1), new Point(pickup1Pose_lane3)))
-                //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane3.getHeading())
-                //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
     }
 
@@ -231,7 +193,7 @@ public class Pedropath_2025_Ver1 extends OpMode {
                     safeWaitSeconds(4);
                     IntakeMotor.setPower(-1.);
                     //ballStopper.setPosition(0.2);
-                    safeWaitSeconds(3);
+                    safeWaitSeconds(4);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(grabPickup1_lane1, true);
                     //follower.followPath(intakePickup1, true);
@@ -258,7 +220,7 @@ public class Pedropath_2025_Ver1 extends OpMode {
             case 3:
                 if(!follower.isBusy()) {
 
-                   // intake.grab(pathTimer);
+                    //intake.grab(pathTimer);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     //follower.followPath(intakePickup2,true);
                     follower.followPath(grabPickup3_lane1,true);
@@ -268,7 +230,7 @@ public class Pedropath_2025_Ver1 extends OpMode {
             case 4:
                 if(!follower.isBusy()) {
                     //follower.breakFollowing();
-                    //intake.grab(pathTimer);
+                   // intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
                     follower.followPath(scorePickup1, true);
                     setPathState(5);
@@ -278,73 +240,9 @@ public class Pedropath_2025_Ver1 extends OpMode {
                 if(!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
-                    //intake.grab(pathTimer);
-                    IntakeMotor.setPower(0.);
-                    safeWaitSeconds(0.3);
+                   // intake.grab(pathTimer);
                     ballStopper.setPosition(0.2);
-                    safeWaitSeconds(1.2);
-                    IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(1.5);
-                    follower.followPath(grabPickup1_lane2, true);
-                    setPathState(6);
-                }
-                break;
-            case 6:
-
-                if(!follower.isBusy()) {
-                    //follower.breakFollowing();
-                    // intake.grab(pathTimer);
-
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                    //intake.grab(pathTimer);
-                    ballStopper.setPosition(0.76);
-                    follower.followPath(grabPickup2_lane2, true);
-                    // follower.followPath(grabPickup1, true);
-                    setPathState(7);
-                }
-
-                break;
-
-            case 7:
-                if(!follower.isBusy()) {
-
-                    // intake.grab(pathTimer);
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    //follower.followPath(intakePickup2,true);
-                    follower.followPath(grabPickup3_lane2,true);
-                    setPathState(8);
-                }
-                break;
-            case 8:
-                if(!follower.isBusy()) {
-                    //follower.breakFollowing();
-                    //intake.grab(pathTimer);
-                    //follower.followPath(scorePickup1, true);
-                    follower.followPath(scorePickup1, true);
-                    setPathState(9);
-                }
-                break;
-            case 9:
-                if(!follower.isBusy()) {
-                    //follower.breakFollowing();
-                    //intake.grab(pathTimer);
-                    //intake.grab(pathTimer);
-                    IntakeMotor.setPower(0.);
-                    safeWaitSeconds(0.3);
-                    ballStopper.setPosition(0.2);
-                    safeWaitSeconds(1.2);
-                    IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(1.5);
-                    follower.followPath(grabPickup1_lane3, true);
-                    setPathState(10);
-                }
-                break;
-            case 10:
-                if(!follower.isBusy()) {
-                    //follower.breakFollowing();
-                    //intake.grab(pathTimer);
-                    //follower.followPath(scorePickup1, true);
-                   // follower.followPath(scorePickup1, true);
+                    follower.followPath(scorePickup2, true);
                     setPathState(-1);
                 }
                 break;
@@ -401,7 +299,6 @@ public class Pedropath_2025_Ver1 extends OpMode {
         IntakeMotor = hardwareMap.dcMotor.get("intake");
         ShooterMotor = hardwareMap.dcMotor.get("shooter");
         ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ballStopper.setPosition(0.2);
         buildPaths();
 
     }
@@ -423,4 +320,5 @@ public class Pedropath_2025_Ver1 extends OpMode {
     public void stop() {
     }
 }
+
 
