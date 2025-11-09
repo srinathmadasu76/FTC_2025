@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelImpl;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -25,7 +26,8 @@ public class Teleop_2025_Alex extends  LinearOpMode {
     DcMotor ExtentionMotor = null;
     DcMotor IntakeMotor = null;
     DcMotor ShooterMotor = null;
-    Servo ballStopper = null;
+    Servo ballKick = null;
+    Servo hood = null;
 
 
 
@@ -41,7 +43,9 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         IntakeMotor = hardwareMap.dcMotor.get("intake");
         ShooterMotor = hardwareMap.dcMotor.get("shooter");
         ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ballStopper = hardwareMap.get(Servo.class,("ballStop"));
+        ballKick = hardwareMap.get(Servo.class,("ballKick"));
+        hood = hardwareMap.get(Servo.class,("hood"));
+
 
         FrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         FrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -57,7 +61,10 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         double power_x=0.75;
         double power_y;
         double y;
-
+        double F = 11.7;
+        double P = F*0.5;
+        double I = P*1;
+        double D = I*0.1;
 
         FrontRight.setPower(0);
         BackLeft.setPower(0);
@@ -75,8 +82,14 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         while (opModeIsActive()) {
 
             //ShooterMotor.setPower(-0.45);
-            ((DcMotorEx)ShooterMotor).setVelocity(-1000);
-           // IntakeMotor.setPower(-1.);
+            ((DcMotorEx)ShooterMotor).setVelocity(1100);
+
+            //((DcMotorEx)ShooterMotor).setVelocityPIDFCoefficients(P, I, D, F);
+            //((DcMotorEx)ShooterMotor).setPositionPIDFCoefficients(5.0);
+            double vel = ((DcMotorEx)ShooterMotor).getVelocity();
+            telemetry.addData("velocity", vel);
+            telemetry.update();
+            // IntakeMotor.setPower(-1.);
             y = -gamepad1.left_stick_y;
             telemetry.addData("Y", y);
             telemetry.update();
@@ -141,7 +154,11 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 FrontRight.setPower(power_y);
                 BackRight.setPower(power_y);
             }
+            if(gamepad1.dpad_left)
+            {
+                hood.setPosition(0.5);
 
+            }
             if (gamepad1.y) {
                 power_y = 1. * slow_down_factor2;
                 FrontLeft.setPower(power_y);
@@ -167,15 +184,15 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
             if (gamepad1.x) {
 
-                ballStopper.setPosition(0.2);
-                safeWaitSeconds(1.2);
+                ballKick.setPosition(0.28);
+                //safeWaitSeconds(1.2);
 
                 IntakeMotor.setPower(-1.);
 
             } else if (gamepad1.b) {
                 IntakeMotor.setPower(0.);
-                safeWaitSeconds(0.3);
-                ballStopper.setPosition(0.85);
+               // safeWaitSeconds(0.3);
+                ballKick.setPosition(0.75);
 
 
             }
