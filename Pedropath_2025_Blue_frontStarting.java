@@ -18,53 +18,50 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue_EndStarting", group = "Auton")
-public class Blue_EndStarting extends OpMode {
+@Autonomous(name = "Pedropath_2025_Blue_frontStarting", group = "Auton")
+public class Pedropath_2025_Blue_frontStarting extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     private int pathState;
     Servo ballStopper = null;
+    Servo hood = null;
     DcMotor ShooterMotor = null;
     DcMotor IntakeMotor = null;
-    Servo hood = null;
     private PIDFController b, s;
 
     private double t = 0;
     public static double bp = 0.03, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
 
 
-    double targetvel = 1150;
+    double targetvel = 1100;
     double pSwitch = 50;
+    private final Pose startPose = new Pose(4.5, 108, Math.toRadians(180));
 
     /**
      * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
      */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose startPose = new Pose(64, 8, Math.toRadians(90) );
+    private final Pose scorePose = new Pose(35, 90, Math.toRadians(130));
+    private final Pose scorePose1 = new Pose(40, 90, Math.toRadians(130));
+    //private final Pose scorePose = new Pose(19, 111);
 
-    /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
-    //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(35, 100, Math.toRadians(155));
-
-    private final Pose scorePose1 = new Pose(35, 100, Math.toRadians(155));
-
-
-    /** Lowest (First) Sample from the Spike Mark */
+    /**
+     * Lowest (First) Sample from the Spike Mark
+     */
     //private final Pose pickup1Pose = new Pose(23, 128);
-    private final Pose pickup1Pose_lane1 = new Pose(45, 90, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane1 = new Pose(15, 75, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane1 = new Pose(10, 75, Math. toRadians(-135));
+    private final Pose pickup1Pose_lane1 = new Pose(30, 64, Math.toRadians(180));
+    private final Pose pickup2Pose_lane1 = new Pose(15, 64, Math.toRadians(180));
+    private final Pose pickup3Pose_lane1 = new Pose(7, 64, Math.toRadians(180));
 
-    //    private final Pose scorePickup1 = new Pose()
-    private final Pose pickup1Pose_lane2 = new Pose(45, 100, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane2 = new Pose(65, 36, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane2 = new Pose(60, 36, Math.toRadians(-135));
+    private final Pose pickup1Pose_lane2 = new Pose(40, 34, Math.toRadians(180));
+    private final Pose pickup2Pose_lane2 = new Pose(8, 34, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(7, 34, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane3 = new Pose(45, 100, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane3 = new Pose(65, 30, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane3 = new Pose(60, 30, Math.toRadians(-135));
+    private final Pose pickup1Pose_lane3 = new Pose(30, 4, Math.toRadians(-175));
+    private final Pose pickup2Pose_lane3 = new Pose(8, 4, Math.toRadians(-175));
+    private final Pose pickup3Pose_lane3 = new Pose(7, 4, Math.toRadians(-175));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -178,9 +175,9 @@ public class Blue_EndStarting extends OpMode {
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
         park = follower.pathBuilder()
-                .addPath(new BezierLine((scorePose1), (pickup1Pose_lane1)))
+                .addPath(new BezierLine((scorePose1), (pickup1Pose_lane2)))
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane1.getHeading())
+                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane2.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
     }
@@ -214,6 +211,7 @@ public class Blue_EndStarting extends OpMode {
                 if (!follower.isBusy()) {
                     //safeWaitSeconds(4);
                     IntakeMotor.setPower(-1.);
+
                     ballStopper.setPosition(0.75);
                     safeWaitSeconds(0.15);
                     ballStopper.setPosition(0.28);
@@ -385,6 +383,7 @@ public class Blue_EndStarting extends OpMode {
 
                     //safeWaitSeconds(1.2);
 
+
                     //safeWaitSeconds(1.5);
                     follower.followPath(scorePickup1, true);
                     setPathState(13);
@@ -448,6 +447,7 @@ public class Blue_EndStarting extends OpMode {
             b.updateError(targetvel - currentvel);
             ShooterMotor.setPower(b.run());
         }
+
         // These loop the movements of the robot, these must be called continuously in order to work
         follower.update();
         autonomousPathUpdate();
@@ -483,6 +483,7 @@ public class Blue_EndStarting extends OpMode {
         hood.setPosition(0.4);
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
         s = new PIDFController(new PIDFCoefficients(sp, 0, sd, sf));
+
     }
 
     /**

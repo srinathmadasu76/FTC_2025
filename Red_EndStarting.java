@@ -18,8 +18,8 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue_EndStarting", group = "Auton")
-public class Blue_EndStarting extends OpMode {
+@Autonomous(name = "Red_EndStarting", group = "Auton")
+public class Red_EndStarting extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -42,29 +42,29 @@ public class Blue_EndStarting extends OpMode {
      * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
      */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose startPose = new Pose(64, 8, Math.toRadians(90) );
+    private final Pose startPose = new Pose(88, 8, Math.toRadians(90) );
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(35, 100, Math.toRadians(155));
+    private final Pose scorePose = new Pose(109, 100, Math.toRadians(25));
 
-    private final Pose scorePose1 = new Pose(35, 100, Math.toRadians(155));
+    private final Pose scorePose1 = new Pose(109, 100, Math.toRadians(25));
 
 
     /** Lowest (First) Sample from the Spike Mark */
     //private final Pose pickup1Pose = new Pose(23, 128);
-    private final Pose pickup1Pose_lane1 = new Pose(45, 90, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane1 = new Pose(15, 75, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane1 = new Pose(10, 75, Math. toRadians(-135));
+    private final Pose pickup1Pose_lane1 = new Pose(99, 90, Math.toRadians(-45));
+    private final Pose pickup2Pose_lane1 = new Pose(119, 75, Math.toRadians(-45));
+    private final Pose pickup3Pose_lane1 = new Pose(134, 75, Math. toRadians(-45));
 
     //    private final Pose scorePickup1 = new Pose()
-    private final Pose pickup1Pose_lane2 = new Pose(45, 100, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane2 = new Pose(65, 36, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane2 = new Pose(60, 36, Math.toRadians(-135));
+    private final Pose pickup1Pose_lane2 = new Pose(99, 100, Math.toRadians(-45));
+    private final Pose pickup2Pose_lane2 = new Pose(106, 36, Math.toRadians(-45));
+    private final Pose pickup3Pose_lane2 = new Pose(96, 36, Math.toRadians(-45));
 
-    private final Pose pickup1Pose_lane3 = new Pose(45, 100, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane3 = new Pose(65, 30, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane3 = new Pose(60, 30, Math.toRadians(-135));
+    private final Pose pickup1Pose_lane3 = new Pose(84, 30, Math.toRadians(-45));
+    private final Pose pickup2Pose_lane3 = new Pose(104, 30, Math.toRadians(-45));
+    private final Pose pickup3Pose_lane3 = new Pose(109, 30, Math.toRadians(-45));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -509,3 +509,4 @@ public class Blue_EndStarting extends OpMode {
     public void stop() {
     }
 }
+
