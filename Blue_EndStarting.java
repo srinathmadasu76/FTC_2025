@@ -49,22 +49,23 @@ public class Blue_EndStarting extends OpMode {
     private final Pose scorePose = new Pose(35, 100, Math.toRadians(155));
 
     private final Pose scorePose1 = new Pose(35, 100, Math.toRadians(155));
+    private final Pose scorePose2 = new Pose(55, 100, Math.toRadians(155));
 
 
     /** Lowest (First) Sample from the Spike Mark */
     //private final Pose pickup1Pose = new Pose(23, 128);
-    private final Pose pickup1Pose_lane1 = new Pose(45, 90, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane1 = new Pose(15, 75, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane1 = new Pose(10, 75, Math. toRadians(-135));
+    private final Pose pickup1Pose_lane1 = new Pose(45, 90, Math.toRadians(225));
+    private final Pose pickup2Pose_lane1 = new Pose(15, 65, Math.toRadians(225));
+    private final Pose pickup3Pose_lane1 = new Pose(10, 65, Math. toRadians(225));
 
     //    private final Pose scorePickup1 = new Pose()
-    private final Pose pickup1Pose_lane2 = new Pose(45, 100, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane2 = new Pose(65, 36, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane2 = new Pose(60, 36, Math.toRadians(-135));
+    private final Pose pickup1Pose_lane2 = new Pose(45, 100, Math.toRadians(225));
+    private final Pose pickup2Pose_lane2 = new Pose(70, 45, Math.toRadians(225));
+    private final Pose pickup3Pose_lane2 = new Pose(60, 45, Math.toRadians(225));
 
-    private final Pose pickup1Pose_lane3 = new Pose(45, 100, Math.toRadians(-135));
-    private final Pose pickup2Pose_lane3 = new Pose(65, 30, Math.toRadians(-135));
-    private final Pose pickup3Pose_lane3 = new Pose(60, 30, Math.toRadians(-135));
+    private final Pose pickup1Pose_lane3 = new Pose(45, 100, Math.toRadians(225));
+    private final Pose pickup2Pose_lane3 = new Pose(100, 30, Math.toRadians(225));
+    private final Pose pickup3Pose_lane3 = new Pose(90, 30, Math.toRadians(225));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -142,6 +143,7 @@ public class Blue_EndStarting extends OpMode {
                 .build();
         grabPickup2_lane2 = follower.pathBuilder()
                 .addPath(new BezierLine((pickup1Pose_lane2), (pickup2Pose_lane2)))
+
                 //.setTangentHeadingInterpolation()
                 .setLinearHeadingInterpolation(pickup1Pose_lane2.getHeading(), pickup2Pose_lane2.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
@@ -154,7 +156,7 @@ public class Blue_EndStarting extends OpMode {
                 .build();
 
         /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        scorePickup1 = follower.pathBuilder()
+        scorePickup2 = follower.pathBuilder()
                 .addPath(new BezierLine((pickup3Pose_lane2), (scorePose1)))
                 .setLinearHeadingInterpolation(pickup3Pose_lane2.getHeading(), scorePose1.getHeading())
                 //.setTangentHeadingInterpolation()
@@ -177,10 +179,15 @@ public class Blue_EndStarting extends OpMode {
                 .setLinearHeadingInterpolation(pickup2Pose_lane3.getHeading(), pickup3Pose_lane3.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
-        park = follower.pathBuilder()
-                .addPath(new BezierLine((scorePose1), (pickup1Pose_lane1)))
+        scorePickup3 = follower.pathBuilder()
+                .addPath(new BezierLine((pickup3Pose_lane3), (scorePose1)))
+                .setLinearHeadingInterpolation(pickup3Pose_lane3.getHeading(), scorePose1.getHeading())
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane1.getHeading())
+                .build();
+        park = follower.pathBuilder()
+                .addPath(new BezierLine((scorePose1), (pickup2Pose_lane2)))
+                //.setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup2Pose_lane2.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
     }
@@ -196,7 +203,7 @@ public class Blue_EndStarting extends OpMode {
             case 0:
                 telemetry.addData("x", follower.getPose().getX());
                 telemetry.addData("y", follower.getPose().getY());
-                follower.setMaxPower(0.6);
+                follower.setMaxPower(0.9);
                 follower.followPath(scorePreload);
 
                 setPathState(1);
@@ -325,7 +332,7 @@ public class Blue_EndStarting extends OpMode {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
-                    follower.followPath(scorePickup1, true);
+                    follower.followPath(scorePickup2, true);
                     setPathState(9);
                 }
                 break;
@@ -386,7 +393,7 @@ public class Blue_EndStarting extends OpMode {
                     //safeWaitSeconds(1.2);
 
                     //safeWaitSeconds(1.5);
-                    follower.followPath(scorePickup1, true);
+                    follower.followPath(scorePickup3, true);
                     setPathState(13);
                 }
                 break;
@@ -425,9 +432,21 @@ public class Blue_EndStarting extends OpMode {
     }
 
     public void safeWaitSeconds(double time) {
+        double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
+        b.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+        s.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+
         ElapsedTime timer = new ElapsedTime(SECONDS);
         timer.reset();
         while (timer.time() < time) {
+            if (Math.abs(targetvel - currentvel) < pSwitch) {
+                s.updateError(targetvel - currentvel);
+                ShooterMotor.setPower(s.run());
+            } else {
+                b.updateError(targetvel - currentvel);
+                ShooterMotor.setPower(b.run());
+            }
         }
     }
 

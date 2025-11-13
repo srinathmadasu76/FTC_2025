@@ -61,7 +61,7 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
 
     private final Pose pickup1Pose_lane3 = new Pose(30, 4, Math.toRadians(-175));
     private final Pose pickup2Pose_lane3 = new Pose(8, 4, Math.toRadians(-175));
-    private final Pose pickup3Pose_lane3 = new Pose(7, 4, Math.toRadians(-175));
+    private final Pose pickup3Pose_lane3 = new Pose(2, 4, Math.toRadians(-175));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -151,7 +151,7 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
                 .build();
 
         /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        scorePickup1 = follower.pathBuilder()
+        scorePickup2 = follower.pathBuilder()
                 .addPath(new BezierLine((pickup3Pose_lane2), (scorePose1)))
                 .setLinearHeadingInterpolation(pickup3Pose_lane2.getHeading(), scorePose1.getHeading())
                 //.setTangentHeadingInterpolation()
@@ -174,10 +174,15 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
                 .setLinearHeadingInterpolation(pickup2Pose_lane3.getHeading(), pickup3Pose_lane3.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
-        park = follower.pathBuilder()
-                .addPath(new BezierLine((scorePose1), (pickup1Pose_lane2)))
+        scorePickup3 = follower.pathBuilder()
+                .addPath(new BezierLine((pickup3Pose_lane3), (scorePose1)))
+                .setLinearHeadingInterpolation(pickup3Pose_lane3.getHeading(), scorePose1.getHeading())
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane2.getHeading())
+                .build();
+        park = follower.pathBuilder()
+                .addPath(new BezierLine((scorePose1), (pickup2Pose_lane2)))
+                //.setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup2Pose_lane2.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
     }
@@ -193,7 +198,7 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
             case 0:
                 telemetry.addData("x", follower.getPose().getX());
                 telemetry.addData("y", follower.getPose().getY());
-                follower.setMaxPower(0.6);
+                follower.setMaxPower(0.9);
                 follower.followPath(scorePreload);
 
                 setPathState(1);
@@ -323,7 +328,7 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
-                    follower.followPath(scorePickup1, true);
+                    follower.followPath(scorePickup2, true);
                     setPathState(9);
                 }
                 break;
@@ -385,7 +390,7 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
 
 
                     //safeWaitSeconds(1.5);
-                    follower.followPath(scorePickup1, true);
+                    follower.followPath(scorePickup3, true);
                     setPathState(13);
                 }
                 break;
@@ -424,9 +429,21 @@ public class Pedropath_2025_Blue_frontStarting extends OpMode {
     }
 
     public void safeWaitSeconds(double time) {
+        double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
+        b.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+        s.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+
         ElapsedTime timer = new ElapsedTime(SECONDS);
         timer.reset();
         while (timer.time() < time) {
+            if (Math.abs(targetvel - currentvel) < pSwitch) {
+                s.updateError(targetvel - currentvel);
+                ShooterMotor.setPower(s.run());
+            } else {
+                b.updateError(targetvel - currentvel);
+                ShooterMotor.setPower(b.run());
+            }
         }
     }
 

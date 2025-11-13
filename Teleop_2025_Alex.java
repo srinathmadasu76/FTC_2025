@@ -34,7 +34,8 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
     private double t = 0;
     public static double bp = 0.03, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
-
+    double targetvel = 1150;
+    double pSwitch = 50;
 
 
     @Override
@@ -72,8 +73,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         double D = 0.5;
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
         s = new PIDFController(new PIDFCoefficients(sp, 0, sd, sf));
-        double targetvel = 1150;
-        double pSwitch = 50;
+
         FrontRight.setPower(0);
         BackLeft.setPower(0);
         FrontLeft.setPower(0);
@@ -205,7 +205,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
             if (gamepad1.x) {
 
                 ballKick.setPosition(0.28);
-                safeWaitSeconds(0.4);
+                //safeWaitSeconds(0.4);
 
                 IntakeMotor.setPower(-1.);
 
@@ -223,11 +223,11 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 IntakeMotor.setPower(-1.);
                 // }
             }
-            if (gamepad2.left_trigger != 0.0) {
+           // if (gamepad2.left_trigger != 0.0) {
 
 
-                IntakeMotor.setPower(-intake_motor_power);
-            }
+              //  IntakeMotor.setPower(-intake_motor_power);
+           // }
 
             if (gamepad1.left_trigger != 0.0) {
                 FrontLeft.setPower(-power_x*5);
@@ -241,14 +241,19 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 FrontRight.setPower(-power_x*5);
                 BackRight.setPower(power_x*5);
             }
-            if (gamepad2.dpad_left) {
-                IntakeMotor.setPower(0);
-            }
+           // if (gamepad2.dpad_left) {
+               // IntakeMotor.setPower(0);
+           // }
 
         }
     }
     //method to wait safely with stop button working if needed. Use this instead of sleep
     public void safeWaitSeconds(double time) {
+        double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
+        b.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+        s.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+
         double power_x=0.5;
         double power_y,y;
         double slow_down_factor=0.5;
@@ -257,6 +262,13 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         ElapsedTime timer = new ElapsedTime(SECONDS);
         timer.reset();
         while (!isStopRequested() && timer.time() < time) {
+            if (Math.abs(targetvel - currentvel) < pSwitch) {
+                s.updateError(targetvel - currentvel);
+                ShooterMotor.setPower(s.run());
+            } else {
+                b.updateError(targetvel - currentvel);
+                ShooterMotor.setPower(b.run());
+            }
             //Strafe Right
             if (gamepad1.right_bumper) {
 
