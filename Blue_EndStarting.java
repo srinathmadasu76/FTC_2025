@@ -35,8 +35,9 @@ public class Blue_EndStarting extends OpMode {
     public static double bp = 0.03, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
 
 
-    double targetvel = 1150;
+    double targetvel = 1050;
     double pSwitch = 50;
+    double waittime = 0.3;
 
     /**
      * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
@@ -203,7 +204,7 @@ public class Blue_EndStarting extends OpMode {
             case 0:
                 telemetry.addData("x", follower.getPose().getX());
                 telemetry.addData("y", follower.getPose().getY());
-                follower.setMaxPower(0.9);
+                follower.setMaxPower(0.85);
                 follower.followPath(scorePreload);
 
                 setPathState(1);
@@ -222,15 +223,15 @@ public class Blue_EndStarting extends OpMode {
                     //safeWaitSeconds(4);
                     IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
                     //safeWaitSeconds(3);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
@@ -286,15 +287,15 @@ public class Blue_EndStarting extends OpMode {
                     //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane2, true);
@@ -347,15 +348,15 @@ public class Blue_EndStarting extends OpMode {
                     //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane3, true);
@@ -405,15 +406,15 @@ public class Blue_EndStarting extends OpMode {
                     //follower.followPath(intakePickup2,true);
                     IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.75);
-                    safeWaitSeconds(0.15);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(0.28);
                     follower.followPath(park, true);
                     setPathState(-1);
@@ -497,7 +498,7 @@ public class Blue_EndStarting extends OpMode {
         IntakeMotor = hardwareMap.dcMotor.get("intake");
         ShooterMotor = hardwareMap.dcMotor.get("shooter");
         hood = hardwareMap.get(Servo.class,("hood"));
-        ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ballStopper.setPosition(0.28);
         hood.setPosition(0.4);
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));

@@ -177,6 +177,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
             if(gamepad1.dpad_left)
             {
                 hood.setPosition(0.4);
+                targetvel = 1150;
 
             }
             if (gamepad1.y) {
@@ -205,7 +206,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
             if (gamepad1.x) {
 
                 ballKick.setPosition(0.28);
-                //safeWaitSeconds(0.4);
+                //safeWaitSeconds(0.2);
 
                 IntakeMotor.setPower(-1.);
 
@@ -216,18 +217,26 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
 
             }
-
-            if (gamepad1.dpad_right ) {
+            if (gamepad1.dpad_up ) {
 
                 // if (timer.time() < 0.8) {
                 IntakeMotor.setPower(-1.);
+
                 // }
             }
-           // if (gamepad2.left_trigger != 0.0) {
+            if (gamepad1.dpad_right ) {
+
+                // if (timer.time() < 0.8) {
+                //IntakeMotor.setPower(-1.);
+                hood.setPosition(0.24);
+                targetvel = 1400;
+                // }
+            }
+            // if (gamepad2.left_trigger != 0.0) {
 
 
-              //  IntakeMotor.setPower(-intake_motor_power);
-           // }
+            //  IntakeMotor.setPower(-intake_motor_power);
+            // }
 
             if (gamepad1.left_trigger != 0.0) {
                 FrontLeft.setPower(-power_x*5);
@@ -241,9 +250,9 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 FrontRight.setPower(-power_x*5);
                 BackRight.setPower(power_x*5);
             }
-           // if (gamepad2.dpad_left) {
-               // IntakeMotor.setPower(0);
-           // }
+            // if (gamepad2.dpad_left) {
+            // IntakeMotor.setPower(0);
+            // }
 
         }
     }
@@ -360,4 +369,3 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         }
     }
 }
-
