@@ -37,8 +37,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import java.util.function.Supplier;
-@TeleOp(name="teleop_2025_alex")
-public class Teleop_2025_Alex extends  LinearOpMode {
+@TeleOp(name="teleop_2025_alex_red")
+public class Teleop_2025_Alex_Red extends  LinearOpMode {
     DcMotor FrontLeft = null;
     DcMotor FrontRight = null;
     DcMotor BackLeft = null;
@@ -53,14 +53,15 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
     private double t = 0;
     public static double bp = 0.01, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
-    double targetvel = 1700;
+    double farvelocity = 2000;
+    double nearvelocity = 1700;
+    double targetvel = farvelocity;
     double pSwitch = 50;
 
     double power_rotation = 0.2;
     double angle_positive = 5;
     double angle_negative = -3;
-    double farvelocity = 2100;
-    double nearvelocity = 1750;
+
 
     private Follower follower;
 
@@ -91,7 +92,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         FrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         BackLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-         ShooterMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        ShooterMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         double slow_down_factor=0.85;
         double slow_down_factor2=1.;
@@ -166,7 +167,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
                 LLResultTypes.FiducialResult target = null;
                 for (LLResultTypes.FiducialResult i : r) {
-                    if (i != null && i.getFiducialId() == 20) {
+                    if (i != null && i.getFiducialId() == 24) {
                         target = i;
                         break;
                     }
@@ -188,7 +189,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
                     target = null;
                     for (LLResultTypes.FiducialResult i : r) {
-                        if (i != null && i.getFiducialId() == 20) {
+                        if (i != null && i.getFiducialId() == 24) {
                             target = i;
                             break;
                         }
@@ -211,7 +212,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
                     target = null;
                     for (LLResultTypes.FiducialResult i : r) {
-                        if (i != null && i.getFiducialId() == 20) {
+                        if (i != null && i.getFiducialId() == 24) {
                             target = i;
                             break;
                         }
@@ -240,8 +241,8 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 */
 
             // ((DcMotorEx) ShooterMotor2).setVelocity(targetvel);
-          //  ((DcMotorEx) ShooterMotor).setVelocity(targetvel);
-             //double currentvel2 = ((DcMotorEx)ShooterMotor2).getVelocity();
+            //  ((DcMotorEx) ShooterMotor).setVelocity(targetvel);
+            //double currentvel2 = ((DcMotorEx)ShooterMotor2).getVelocity();
 
 
             double currentvel1 = ((DcMotorEx)ShooterMotor).getVelocity();
@@ -249,7 +250,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
             //((DcMotorEx)ShooterMotor).setPositionPIDFCoefficients(5.0);
             telemetry.addData("velocity1", currentvel1);
             //telemetry.addData("velocity2", currentvel2);
-           // telemetry.addData("encoder2", ShooterMotor2.getCurrentPosition());
+            // telemetry.addData("encoder2", ShooterMotor2.getCurrentPosition());
             telemetry.update();
 
 
@@ -526,3 +527,4 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         }
     }
 }
+
