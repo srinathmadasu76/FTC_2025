@@ -39,8 +39,8 @@ public class Red_RearHumanPlayer extends OpMode {
     double pSwitch = 50;
     double waittime = 0.5;
     double hoodposition = 0.24;
-    double farvelocity = 1900;
-    double nearvelocity = 1900;
+    double farvelocity = 2150;
+    double nearvelocity = 1700;
     double targetvel = farvelocity;
     double power_pickup = 0.85;
     double power_shooting = 0.95;
@@ -282,13 +282,13 @@ public class Red_RearHumanPlayer extends OpMode {
                     // follower.followPath(grabPickup1, true);
                     setPathState(4);
                 }
-
+                opmodeTimer.resetTimer();
                 break;
 
             case 4:
                 IntakeMotor.setPower(0.);
                 follower.setMaxPower(power_shooting);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
                     // intake.grab(pathTimer);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
@@ -355,13 +355,13 @@ public class Red_RearHumanPlayer extends OpMode {
                     // follower.followPath(grabPickup1, true);
                     setPathState(8);
                 }
-
+                opmodeTimer.resetTimer();
                 break;
 
             case 8:
                 IntakeMotor.setPower(0.);
                 follower.setMaxPower(power_shooting);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
                     // intake.grab(pathTimer);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
@@ -424,11 +424,12 @@ public class Red_RearHumanPlayer extends OpMode {
                     follower.followPath(grabPickup3_lane3, true);
                     setPathState(12);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 12:
                 follower.setMaxPower(power_shooting);
                 IntakeMotor.setPower(0.);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
                     // intake.grab(pathTimer);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */

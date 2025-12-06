@@ -37,12 +37,14 @@ public class Red_FrontStartingPinpoint extends OpMode {
     public static double bp = 0.02, bd = 0.0, bf = 0.0, sp = 0.02, sd = 0.0001, sf = 0.0;
 
 
-    double targetvel = 1700;
+    double targetvel = 1750;
     double pSwitch = 50;
     double waittime = 0.55;
 
     double power_pickup=0.85;
-    double power_shooting = 0.95;
+    double power_shooting = 1.;
+    double ballkicker_up = 0.72;
+    double ballkicker_down = 0.28;
     private final Pose startPose = new Pose(120, 120, Math.toRadians(0) );
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
@@ -204,7 +206,7 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 telemetry.addData("y", follower.getPose().getY());
                 follower.setMaxPower(power_shooting);
                 follower.followPath(scorePreload);
-                IntakeMotor.setPower(-1.);
+                //IntakeMotor.setPower(-1.);
                 setPathState(1);
                 break;
             case 1:
@@ -217,29 +219,29 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
                 //if (follower.getPose().getX() > (scorePose.getX() - 1) && follower.getPose().getY() > (scorePose.getY() - 1)) {
-                follower.setMaxPower(power_pickup);
+
                 if (!follower.isBusy()) {
                     //safeWaitSeconds(4);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(3);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(grabPickup1_lane1, true);
@@ -249,7 +251,7 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 break;
 
             case 2:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     // intake.grab(pathTimer);
@@ -273,10 +275,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
                     follower.followPath(grabPickup3_lane1, true);
                     setPathState(4);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 4:
-                follower.setMaxPower(power_shooting);
-                if (!follower.isBusy()) {
+
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
@@ -285,7 +288,9 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 }
                 break;
             case 5:
-                follower.setMaxPower(power_pickup);
+                follower.setMaxPower(power_shooting);
+                IntakeMotor.setPower(0.);
+
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
@@ -296,31 +301,31 @@ public class Red_FrontStartingPinpoint extends OpMode {
                     //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane2, true);
                     setPathState(6);
                 }
                 break;
             case 6:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     // intake.grab(pathTimer);
@@ -344,10 +349,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
                     follower.followPath(grabPickup3_lane2, true);
                     setPathState(8);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 8:
-                follower.setMaxPower(power_shooting);
-                if (!follower.isBusy()) {
+
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
@@ -356,7 +362,9 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 }
                 break;
             case 9:
-                follower.setMaxPower(power_pickup);
+                follower.setMaxPower(power_shooting);
+                IntakeMotor.setPower(0.);
+
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
@@ -367,30 +375,31 @@ public class Red_FrontStartingPinpoint extends OpMode {
                     //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane3, true);
                     setPathState(10);
                 }
                 break;
             case 10:
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
@@ -409,10 +418,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
                     follower.followPath(grabPickup3_lane3, true);
                     setPathState(12);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 12:
-                follower.setMaxPower(power_shooting);
-                if (!follower.isBusy()) {
+
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //intake.grab(pathTimer);
@@ -428,7 +438,8 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 }
                 break;
             case 13:
-
+                follower.setMaxPower(power_shooting);
+                IntakeMotor.setPower(0.);
                 if (!follower.isBusy()) {
 
                     // intake.grab(pathTimer);
@@ -436,24 +447,24 @@ public class Red_FrontStartingPinpoint extends OpMode {
                     //follower.followPath(intakePickup2,true);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     follower.followPath(park, true);
                     setPathState(-1);
                 }
@@ -540,11 +551,12 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
         ballStopper = hardwareMap.get(Servo.class,("ballKick"));
         IntakeMotor = hardwareMap.dcMotor.get("intake");
+        IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         ShooterMotor = hardwareMap.dcMotor.get("shooter");
         ShooterMotor2 = hardwareMap.dcMotor.get("shooter2");
         hood = hardwareMap.get(Servo.class,("hood"));
         //ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ballStopper.setPosition(0.28);
+        ballStopper.setPosition(ballkicker_down);
         hood.setPosition(0.24);
         ShooterMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));

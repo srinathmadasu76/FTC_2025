@@ -12,7 +12,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelImpl;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.PIDFController;
 
@@ -20,6 +19,8 @@ import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.List;
@@ -44,7 +45,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
     DcMotor BackLeft = null;
     DcMotor BackRight = null;
     DcMotor ExtentionMotor = null;
-    DcMotor IntakeMotor = null;
+    DcMotorEx IntakeMotor = null;
     DcMotor ShooterMotor = null;
     DcMotor ShooterMotor2 = null;
     Servo ballKick = null;
@@ -59,8 +60,10 @@ public class Teleop_2025_Alex extends  LinearOpMode {
     double power_rotation = 0.2;
     double angle_positive = 5;
     double angle_negative = -3;
-    double farvelocity = 2100;
+    double farvelocity = 2150;
     double nearvelocity = 1750;
+    double ballkicker_up = 0.72;
+    double ballkicker_down = 0.28;
 
     private Follower follower;
 
@@ -78,7 +81,9 @@ public class Teleop_2025_Alex extends  LinearOpMode {
         BackLeft = hardwareMap.dcMotor.get("BL");
         BackRight = hardwareMap.dcMotor.get("BR");
 
-        IntakeMotor = hardwareMap.dcMotor.get("intake");
+        IntakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+        IntakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         ShooterMotor = hardwareMap.dcMotor.get("shooter");
         ShooterMotor2 = hardwareMap.dcMotor.get("shooter2");
         //ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -99,6 +104,10 @@ public class Teleop_2025_Alex extends  LinearOpMode {
 
 
         double intake_motor_power = 1;
+        double CURRENT_LIMIT=2.0;
+        long SPIKE_TIME_MS= 1000;
+        boolean intakeRunning= false;
+        long jamStart=0;
 
         double power_x=0.75;
         double power_y;
@@ -161,6 +170,9 @@ public class Teleop_2025_Alex extends  LinearOpMode {
             }
             telemetry.addData("velocity1", currentvel);
             telemetry.addData("encoder1", ShooterMotor.getCurrentPosition());
+            if (gamepad1.dpad_up) {
+                IntakeMotor.setPower(1);
+            }
             if (gamepad1.dpad_down) {
                 List<LLResultTypes.FiducialResult> r = limelight.getLatestResult().getFiducialResults();
 
@@ -331,7 +343,6 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 FrontRight.setPower(power_y);
                 BackRight.setPower(power_y);
             }
-
             if (gamepad1.a) {
                 power_y = -1. * slow_down_factor2;
                 FrontLeft.setPower(power_y);
@@ -348,27 +359,39 @@ public class Teleop_2025_Alex extends  LinearOpMode {
             }
 
             if (gamepad1.x) {
+                intakeRunning=true;
 
-                ballKick.setPosition(0.28);
-                //safeWaitSeconds(0.2);
-
-                IntakeMotor.setPower(-1.);
-
-            } else if (gamepad1.b) {
-                IntakeMotor.setPower(0.);
-                // safeWaitSeconds(0.3);
-                ballKick.setPosition(0.75);
-
-
+                ballKick.setPosition(ballkicker_down);
             }
-            if (gamepad1.dpad_up ) {
-
-                // if (timer.time() < 0.8) {
-                IntakeMotor.setPower(-1.);
-
-                // }
+            if(gamepad1.b){
+                intakeRunning = false;
+                IntakeMotor.setPower(0.0);
+                ballKick.setPosition(ballkicker_up);
             }
-            if (gamepad1.dpad_right ) {
+            if(intakeRunning){
+                IntakeMotor.setPower(-1.0);
+            }
+            else{
+                IntakeMotor.setPower(0.0);
+            }
+
+            double intakeCurrent = IntakeMotor.getCurrent(CurrentUnit.AMPS);
+
+            if (intakeRunning && intakeCurrent > CURRENT_LIMIT) {
+                if (jamStart == 0) {
+                    jamStart = System.currentTimeMillis();
+                }
+                if (System.currentTimeMillis() - jamStart >= SPIKE_TIME_MS) {
+                    intakeRunning = false;
+                    IntakeMotor.setPower(0.0);
+                }
+            } else {
+                jamStart = 0;
+            }
+            telemetry.addData("Intake Current", intakeCurrent);
+
+
+                if (gamepad1.dpad_right ) {
 
                 // if (timer.time() < 0.8) {
                 //IntakeMotor.setPower(-1.);
@@ -427,7 +450,7 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 ShooterMotor.setPower(b1.run());
             }
 
-            double currentvel2 = ((DcMotorEx)ShooterMotor2).getVelocity();
+            double currentvel2 = ((DcMotorEx)ShooterMotor).getVelocity();
             if (Math.abs(targetvel - currentvel2) < pSwitch) {
                 s2.updateError(targetvel - currentvel2);
                 ShooterMotor.setPower(s2.run());

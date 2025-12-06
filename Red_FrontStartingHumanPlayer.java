@@ -36,14 +36,16 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
     private double t = 0;
     public static double bp = 0.02, bd = 0.0, bf = 0.0, sp = 0.02, sd = 0.0001, sf = 0.0;
 
-    double farvelocity = 1900;
+    double farvelocity = 2150;
     double nearvelocity = 1700;
     double targetvel = nearvelocity;
     double pSwitch = 50;
-    double waittime = 0.55;
+    double waittime = 0.45;
 
     double power_pickup=0.85;
-    double power_shooting = 0.95;
+    double power_shooting = 1.;
+    double ballkicker_up = 0.72;
+    double ballkicker_down = 0.28;
     private final Pose startPose = new Pose(120, 120, Math.toRadians(0) );
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
@@ -52,6 +54,7 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
     private final Pose scorePose1 = new Pose(78, 82, Math.toRadians(45));
     private final Pose scorePose2 = new Pose(84, 16, Math.toRadians(65));
     private final Pose Park = new Pose(96, 16, Math.toRadians(0));
+    private final Pose open_gate = new Pose(15, 72, Math.toRadians(180));
     //private final Pose scorePose = new Pose(19, 111);
 
     /** Lowest (First) Sample from the Spike Mark */
@@ -72,7 +75,7 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
-    private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1, grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, grabPickup1_lane3, grabPickup2_lane3, grabPickup3_lane3, park,scorePickup2, scorePickup3, grabPickup_humanplayer,scorePickup4;
+    private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1, grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, grabPickup1_lane3, grabPickup2_lane3, grabPickup3_lane3, park,scorePickup2, scorePickup3, grabPickup_humanplayer,scorePickup4, opengate;
 
     public void buildPaths() {
 
@@ -163,6 +166,11 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                 .setLinearHeadingInterpolation(pickup3Pose_lane2.getHeading(), scorePose1.getHeading())
                 //.setTangentHeadingInterpolation()
                 .build();
+        opengate = follower.pathBuilder()
+                .addPath(new BezierLine((scorePose1), (open_gate)))
+                .setLinearHeadingInterpolation(scorePose1.getHeading(), open_gate.getHeading())
+                //.setTangentHeadingInterpolation()
+                .build();
         grabPickup1_lane3 = follower.pathBuilder()
                 .addPath(new BezierLine((scorePose1), (pickup1Pose_lane3)))
                 //.setTangentHeadingInterpolation()
@@ -170,9 +178,9 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
         grabPickup2_lane3 = follower.pathBuilder()
-                .addPath(new BezierLine((pickup1Pose_lane3), (pickup2Pose_lane3)))
+                .addPath(new BezierLine((open_gate), (pickup2Pose_lane3)))
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(pickup1Pose_lane3.getHeading(), pickup2Pose_lane3.getHeading())
+                .setLinearHeadingInterpolation(open_gate.getHeading(), pickup2Pose_lane3.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
         grabPickup3_lane3 = follower.pathBuilder()
@@ -236,24 +244,24 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     //safeWaitSeconds(4);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(3);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(grabPickup1_lane1, true);
@@ -287,11 +295,12 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     follower.followPath(grabPickup3_lane1, true);
                     setPathState(4);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 4:
                 follower.setMaxPower(power_shooting);
                 IntakeMotor.setPower(0.);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
@@ -311,24 +320,24 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane2, true);
                     setPathState(6);
@@ -359,11 +368,12 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     follower.followPath(grabPickup3_lane2, true);
                     setPathState(8);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 8:
                 follower.setMaxPower(power_shooting);
                 IntakeMotor.setPower(0.);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //follower.followPath(scorePickup1, true);
@@ -383,26 +393,26 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
-                    follower.followPath(grabPickup1_lane3, true);
+                    follower.followPath(opengate, true);
                     setPathState(10);
                 }
                 break;
@@ -425,11 +435,12 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     follower.followPath(grabPickup3_lane3, true);
                     setPathState(12);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 12:
                 follower.setMaxPower(power_shooting);
                 IntakeMotor.setPower(0.);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //intake.grab(pathTimer);
@@ -463,32 +474,33 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     //follower.followPath(intakePickup2,true);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     follower.followPath(grabPickup_humanplayer, true);
                     setPathState(14);
                 }
+                opmodeTimer.resetTimer();
                 break;
             case 14:
                 follower.setMaxPower(power_shooting);
                 IntakeMotor.setPower(0.);
-                if (!follower.isBusy()) {
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //intake.grab(pathTimer);
@@ -522,24 +534,24 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
                     //follower.followPath(intakePickup2,true);
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    ballStopper.setPosition(0.28);
+                    ballStopper.setPosition(ballkicker_down);
                     follower.followPath(park, true);
                     setPathState(-1);
                 }
@@ -631,7 +643,7 @@ public class Red_FrontStartingHumanPlayer extends OpMode {
         ShooterMotor2 = hardwareMap.dcMotor.get("shooter2");
         hood = hardwareMap.get(Servo.class,("hood"));
         //ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ballStopper.setPosition(0.28);
+        ballStopper.setPosition(ballkicker_down);
         hood.setPosition(0.24);
         ShooterMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
