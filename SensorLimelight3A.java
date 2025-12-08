@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PIDFController;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -12,7 +14,15 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
+import com.pedropathing.math.Vector;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 /*
  * This OpMode illustrates how to use the Limelight3A Vision Sensor.
  *
@@ -39,9 +49,27 @@ import java.util.List;
 public class SensorLimelight3A extends OpMode {
 
     private Limelight3A limelight;
+    DcMotor ShooterMotor = null;
+    DcMotor FrontLeft = null;
+    DcMotor FrontRight = null;
+    DcMotor BackLeft = null;
+    DcMotor BackRight = null;
+    public static double bp = 0.01, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
+    double targetvel = 1700;
+    double pSwitch = 50;
+    private PIDFController b, s;
+    double angle;
+    double power_rotation = 0.2;
+    double angle_positive = 5;
+    double angle_negative = -3;
+    int tagID = 20;
 
     @Override
     public void init() {
+        FrontLeft = hardwareMap.dcMotor.get("FL")   ;
+        FrontRight = hardwareMap.dcMotor.get("FR");
+        BackLeft = hardwareMap.dcMotor.get("BL");
+        BackRight = hardwareMap.dcMotor.get("BR");
         limelight = hardwareMap.get(Limelight3A.class, "limelight3A");
         limelight.setPollRateHz(100);
         // telemetry.setMsTransmissionInterval(11);
@@ -117,6 +145,106 @@ public class SensorLimelight3A extends OpMode {
                     for (LLResultTypes.ClassifierResult cr : classifierResults) {
                         telemetry.addData("Classifier", "Class: %s, Confidence: %.2f", cr.getClassName(), cr.getConfidence());
                     }
+
+                    if (gamepad1.dpad_down) {
+                        List<LLResultTypes.FiducialResult> r = limelight.getLatestResult().getFiducialResults();
+
+                        LLResultTypes.FiducialResult target = null;
+                        for (LLResultTypes.FiducialResult i : r) {
+                            if (i != null && i.getFiducialId() == tagID) {
+                                target = i;
+                                break;
+                            }
+                        }
+
+                        if (target != null) {
+                            angle = target.getTargetXDegrees();
+                            telemetry.addData("angle", angle);
+                            //telemetry.addData("robotheading:", follower::getHeading);
+                        }
+                        while(angle>angle_positive)
+                        {
+                            FrontRight.setPower(-power_rotation);
+                            BackLeft.setPower(power_rotation);
+                            FrontLeft.setPower(power_rotation);
+                            BackRight.setPower(-power_rotation);
+
+                            r = limelight.getLatestResult().getFiducialResults();
+
+                            target = null;
+                            for (LLResultTypes.FiducialResult i : r) {
+                                if (i != null && i.getFiducialId() == tagID) {
+                                    target = i;
+                                    break;
+                                }
+                            }
+
+                            if (target != null) {
+                                angle = target.getTargetXDegrees();
+                                telemetry.addData("angle", angle);
+                                //telemetry.addData("robotheading:", follower::getHeading);
+                            }
+                        }
+                        while(angle<angle_negative)
+                        {
+                            FrontRight.setPower(power_rotation);
+                            BackLeft.setPower(-power_rotation);
+                            FrontLeft.setPower(-power_rotation);
+                            BackRight.setPower(power_rotation);
+
+                            r = limelight.getLatestResult().getFiducialResults();
+
+                            target = null;
+                            for (LLResultTypes.FiducialResult i : r) {
+                                if (i != null && i.getFiducialId() == tagID) {
+                                    target = i;
+                                    break;
+                                }
+                            }
+
+                            if (target != null) {
+                                angle = target.getTargetXDegrees();
+                                telemetry.addData("angle", angle);
+                                //telemetry.addData("robotheading:", follower::getHeading);
+                            }
+                        }
+                    }
+
+                    List<LLResultTypes.FiducialResult> r =limelight.getLatestResult().getFiducialResults();
+
+
+
+                    LLResultTypes.FiducialResult target = null;
+                    for (LLResultTypes.FiducialResult i: r) {
+                        if (i != null && i.getFiducialId() ==  tagID) {
+                            target = i;
+                            break;
+                        }
+                    }
+
+                    if (target != null) {
+                        double x = (target.getCameraPoseTargetSpace().getPosition().x / DistanceUnit.mPerInch) + 0; // right/left from tag
+                        double z = (target.getCameraPoseTargetSpace().getPosition().z / DistanceUnit.mPerInch) + 8; // forward/back from tag
+
+                        Vector e = new Vector();
+                        e.setOrthogonalComponents(x, z);
+                        telemetry.addData("Distance", e.getMagnitude());
+                    }
+                    double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
+                    b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
+                    s = new PIDFController(new PIDFCoefficients(sp, 0, sd, sf));
+                    b.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+                    s.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+                    if (Math.abs(targetvel - currentvel) < pSwitch) {
+                        s.updateError(targetvel - currentvel);
+                        ShooterMotor.setPower(s.run());
+                    } else {
+                        b.updateError(targetvel - currentvel);
+                        telemetry.addData("power1", b.run());
+                        ShooterMotor.setPower(b.run());
+                    }
+                    telemetry.addData("velocity1", currentvel);
 
                     // Access detector results
                  /*   List<LLResultTypes.DetectorResult> detectorResults = result.getDetectorResults();

@@ -60,8 +60,8 @@ public class Teleop_2025_Alex extends  LinearOpMode {
     double power_rotation = 0.2;
     double angle_positive = 5;
     double angle_negative = -3;
-    double farvelocity = 2150;
-    double nearvelocity = 1750;
+    double farvelocity = 2200;
+    double nearvelocity = 1800;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
 

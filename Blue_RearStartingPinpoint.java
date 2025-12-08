@@ -42,11 +42,12 @@ public class Blue_RearStartingPinpoint extends OpMode {
 
     double power_pickup = 0.85;
     double power_shooting = 0.95;
-    double farvelocity = 2150;
-    double nearvelocity = 1700;
+    double farvelocity = 2200;
+    double nearvelocity = 1800;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
     double targetvel = farvelocity;
+    double waittime_offset = 0.2;
     private final Pose startPose = new Pose(60, 10, Math.toRadians(90));
 
     /**
@@ -237,7 +238,7 @@ public class Blue_RearStartingPinpoint extends OpMode {
 
                     ballStopper.setPosition(ballkicker_down);
                     IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(waittime);
+                    safeWaitSeconds(waittime+waittime_offset);
                     IntakeMotor.setPower(0.);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);

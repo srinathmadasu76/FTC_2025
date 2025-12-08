@@ -37,7 +37,7 @@ public class Red_FrontStartingPinpoint extends OpMode {
     public static double bp = 0.02, bd = 0.0, bf = 0.0, sp = 0.02, sd = 0.0001, sf = 0.0;
 
 
-    double targetvel = 1750;
+    double targetvel = 1800;
     double pSwitch = 50;
     double waittime = 0.55;
 
@@ -49,9 +49,9 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(78, 82, Math.toRadians(45));
-    private final Pose scorePose1 = new Pose(78, 82, Math.toRadians(45));
-    private final Pose scorePose2 = new Pose(78, 82, Math.toRadians(45));
+    private final Pose scorePose = new Pose(78, 88, Math.toRadians(40));
+    private final Pose scorePose1 = new Pose(78, 88, Math.toRadians(40));
+    private final Pose scorePose2 = new Pose(78, 88, Math.toRadians(40));
     private final Pose Park = new Pose(78, 64, Math.toRadians(45));
     //private final Pose scorePose = new Pose(19, 111);
 
@@ -63,11 +63,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
     private final Pose pickup1Pose_lane2 = new Pose(96, 60, Math.toRadians(0));
     private final Pose pickup2Pose_lane2 = new Pose(118, 60, Math.toRadians(0));
-    private final Pose pickup3Pose_lane2 = new Pose(130, 60, Math.toRadians(0));//122
+    private final Pose pickup3Pose_lane2 = new Pose(128, 60, Math.toRadians(0));//122
 
     private final Pose pickup1Pose_lane3 = new Pose(96, 40, Math.toRadians(0));
     private final Pose pickup2Pose_lane3 = new Pose(118, 40, Math.toRadians(0));
-    private final Pose pickup3Pose_lane3 = new Pose(134, 40, Math.toRadians(0));//122
+    private final Pose pickup3Pose_lane3 = new Pose(128, 40, Math.toRadians(0));//122
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;

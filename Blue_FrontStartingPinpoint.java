@@ -34,10 +34,10 @@ public class Blue_FrontStartingPinpoint extends OpMode {
     private double t = 0;
     public static double bp = 0.02, bd = 0.0, bf = 0.0, sp = 0.02, sd = 0.0001, sf = 0.0;
 
-    double targetvel = 1750;
+    double targetvel = 1800;
     double pSwitch = 50;
     double waittime = 0.55;
-    double power_pickup = 0.85;
+    double power_pickup = 0.85;//0.85
     double power_shooting = 1.;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
@@ -57,9 +57,9 @@ public class Blue_FrontStartingPinpoint extends OpMode {
      * Lowest (First) Sample from the Spike Mark
      */
     //private final Pose pickup1Pose = new Pose(23, 128);
-    private final Pose pickup1Pose_lane1 = new Pose(48, 84, Math.toRadians(180));
-    private final Pose pickup2Pose_lane1 = new Pose(26, 84, Math.toRadians(180));
-    private final Pose pickup3Pose_lane1 = new Pose(15, 84, Math.toRadians(180));
+    private final Pose pickup1Pose_lane1 = new Pose(48, 87, Math.toRadians(180));
+    private final Pose pickup2Pose_lane1 = new Pose(26, 87, Math.toRadians(180));//26
+    private final Pose pickup3Pose_lane1 = new Pose(15, 87, Math.toRadians(180));//15
 
     private final Pose pickup1Pose_lane2 = new Pose(48, 64, Math.toRadians(180));
     private final Pose pickup2Pose_lane2 = new Pose(26, 64, Math.toRadians(180));
