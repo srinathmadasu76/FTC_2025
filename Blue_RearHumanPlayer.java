@@ -42,8 +42,8 @@ public class Blue_RearHumanPlayer extends OpMode {
 
     double power_pickup = 0.85;
     double power_shooting = 0.95;
-    double farvelocity = 2150;
-    double nearvelocity = 1900;
+    double farvelocity = 1550;
+    double nearvelocity = 1250;
     double targetvel = farvelocity;
     private final Pose startPose = new Pose(60, 10, Math.toRadians(90));
 
@@ -51,7 +51,7 @@ public class Blue_RearHumanPlayer extends OpMode {
      * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
      */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(60, 16, Math.toRadians(115));
+    private final Pose scorePose = new Pose(60, 16, Math.toRadians(110));
     private final Pose scorePose1 = new Pose(60, 16, Math.toRadians(125));
     private final Pose scorePose2 = new Pose(60, 16, Math.toRadians(125));
     //private final Pose scorePose = new Pose(19, 111);
