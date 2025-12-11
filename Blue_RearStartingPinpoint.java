@@ -37,13 +37,14 @@ public class Blue_RearStartingPinpoint extends OpMode {
 
 
     double pSwitch = 50;
-    double waittime = 0.5;
+    double waittime = 0.4;
+    double waittime_transfer = 0.3;
     double hoodposition = 0.24;
 
     double power_pickup = 0.85;
     double power_shooting = 0.95;
-    double farvelocity = 2200;
-    double nearvelocity = 1800;
+    double farvelocity = 1550;
+    double nearvelocity = 1250;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
     double targetvel = farvelocity;
@@ -237,18 +238,17 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
+                    safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(waittime+waittime_offset);
-                    IntakeMotor.setPower(0.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(grabPickup1_lane1, true);
@@ -317,18 +317,17 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     follower.followPath(grabPickup1_lane2, true);
                     setPathState(6);
@@ -392,18 +391,17 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     follower.followPath(grabPickup1_lane3, true);
                     setPathState(10);
@@ -467,23 +465,22 @@ public class Blue_RearStartingPinpoint extends OpMode {
 
                     IntakeMotor.setPower(0.);
 
-                    ballStopper.setPosition(0.75);
+                    ballStopper.setPosition(ballkicker_up);
 
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
+                    ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
-                    ballStopper.setPosition(0.75);
                     safeWaitSeconds(waittime);
                     IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
+                    ballStopper.setPosition(ballkicker_up);
+                    safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
                     follower.followPath(park, true);
 

@@ -34,9 +34,10 @@ public class Blue_FrontStartingPinpoint extends OpMode {
     private double t = 0;
     public static double bp = 0.02, bd = 0.0, bf = 0.0, sp = 0.02, sd = 0.0001, sf = 0.0;
 
-    double targetvel = 1800;
+    double targetvel = 1300;
     double pSwitch = 50;
-    double waittime = 0.55;
+    double waittime = 0.4;
+    double waittime_transfer = 0.3;
     double power_pickup = 0.85;//0.85
     double power_shooting = 1.;
     double ballkicker_up = 0.72;
@@ -48,8 +49,8 @@ public class Blue_FrontStartingPinpoint extends OpMode {
      */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
     private final Pose scorePose = new Pose(68, 80, Math.toRadians(145));
-    private final Pose scorePose1 = new Pose(68, 80, Math.toRadians(145));
-    private final Pose scorePose2 = new Pose(68, 80, Math.toRadians(145));
+    private final Pose scorePose1 = new Pose(68, 80, Math.toRadians(140));
+    private final Pose scorePose2 = new Pose(68, 80, Math.toRadians(140));
     private final Pose Park = new Pose(68, 64, Math.toRadians(140));
     //private final Pose scorePose = new Pose(19, 111);
 
@@ -59,15 +60,15 @@ public class Blue_FrontStartingPinpoint extends OpMode {
     //private final Pose pickup1Pose = new Pose(23, 128);
     private final Pose pickup1Pose_lane1 = new Pose(48, 87, Math.toRadians(180));
     private final Pose pickup2Pose_lane1 = new Pose(26, 87, Math.toRadians(180));//26
-    private final Pose pickup3Pose_lane1 = new Pose(15, 87, Math.toRadians(180));//15
+    private final Pose pickup3Pose_lane1 = new Pose(18, 87, Math.toRadians(180));//15
 
     private final Pose pickup1Pose_lane2 = new Pose(48, 64, Math.toRadians(180));
     private final Pose pickup2Pose_lane2 = new Pose(26, 64, Math.toRadians(180));
-    private final Pose pickup3Pose_lane2 = new Pose(10, 64, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(18, 64, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane3 = new Pose(48, 40, Math.toRadians(180));
-    private final Pose pickup2Pose_lane3 = new Pose(26, 40, Math.toRadians(180));
-    private final Pose pickup3Pose_lane3 = new Pose(10, 40, Math.toRadians(180));
+    private final Pose pickup1Pose_lane3 = new Pose(48, 38, Math.toRadians(180));
+    private final Pose pickup2Pose_lane3 = new Pose(26, 38, Math.toRadians(180));
+    private final Pose pickup3Pose_lane3 = new Pose(16, 38, Math.toRadians(180));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -230,18 +231,17 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(3);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
@@ -308,18 +308,17 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane2, true);
@@ -383,18 +382,17 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane3, true);
@@ -456,18 +454,17 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
 
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
-                    IntakeMotor.setPower(-1.);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(0.);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
                     ballStopper.setPosition(ballkicker_down);
                     follower.followPath(park, true);
                     setPathState(-1);

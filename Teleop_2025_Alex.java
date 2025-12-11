@@ -60,8 +60,8 @@ public class Teleop_2025_Alex extends  LinearOpMode {
     double power_rotation = 0.2;
     double angle_positive = 5;
     double angle_negative = -3;
-    double farvelocity = 2200;
-    double nearvelocity = 1800;
+    double farvelocity = 1550;
+    double nearvelocity = 1250;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
 
@@ -191,6 +191,18 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 }
                 while(angle>angle_positive)
                 {
+                    currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
+                    b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+                    s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+                    if (Math.abs(targetvel - currentvel) < pSwitch) {
+                        s1.updateError(targetvel - currentvel);
+                        ShooterMotor.setPower(s1.run());
+                    } else {
+                        b1.updateError(targetvel - currentvel);
+                        telemetry.addData("power1", b1.run());
+                        ShooterMotor.setPower(b1.run());
+                    }
                     FrontRight.setPower(-power_rotation);
                     BackLeft.setPower(power_rotation);
                     FrontLeft.setPower(power_rotation);
@@ -214,6 +226,18 @@ public class Teleop_2025_Alex extends  LinearOpMode {
                 }
                 while(angle<angle_negative)
                 {
+                    currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
+                    b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+                    s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+                    if (Math.abs(targetvel - currentvel) < pSwitch) {
+                        s1.updateError(targetvel - currentvel);
+                        ShooterMotor.setPower(s1.run());
+                    } else {
+                        b1.updateError(targetvel - currentvel);
+                        telemetry.addData("power1", b1.run());
+                        ShooterMotor.setPower(b1.run());
+                    }
                     FrontRight.setPower(power_rotation);
                     BackLeft.setPower(-power_rotation);
                     FrontLeft.setPower(-power_rotation);
