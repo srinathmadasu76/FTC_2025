@@ -1,575 +1,290 @@
 package org.firstinspires.ftc.teamcode;
-import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DigitalChannelImpl;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.pedropathing.control.PIDFCoefficients;
-import com.pedropathing.control.PIDFController;
-
-import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PIDFController;
+import com.pedropathing.math.Vector;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.List;
 
-import com.bylazar.configurables.annotations.Configurable;
-import com.bylazar.telemetry.PanelsTelemetry;
-import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.HeadingInterpolator;
-import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+@TeleOp(name = "teleop_Red")
+public class Teleop_2025_Alex_Red extends LinearOpMode {
 
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import java.util.function.Supplier;
-@TeleOp(name="teleop_2025_alex_red")
-public class Teleop_2025_Alex_Red extends  LinearOpMode {
-    DcMotor FrontLeft = null;
-    DcMotor FrontRight = null;
-    DcMotor BackLeft = null;
-    DcMotor BackRight = null;
-    DcMotor ExtentionMotor = null;
-    DcMotorEx IntakeMotor = null;
-    DcMotor ShooterMotor = null;
-    DcMotor ShooterMotor2 = null;
-    Servo ballKick = null;
-    Servo hood = null;
-    private PIDFController b1, s1, b2, s2;
-
-    private double t = 0;
-    public static double bp = 0.01, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
-    double targetvel = 1700;
-    double pSwitch = 50;
-
-    double power_rotation = 0.2;
-    double angle_positive = 5;
-    double angle_negative = -3;
-    double farvelocity = 1550;
-    double nearvelocity = 1250;
-    double ballkicker_up = 0.72;
-    double ballkicker_down = 0.28;
-
-    private Follower follower;
-
-    private boolean automatedDrive;
-    private Supplier<PathChain> pathChain;
+    // ---------------- Hardware ----------------
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private DcMotorEx intakeMotor;
+    private DcMotor shooterMotor;
+    private Servo ballKick, hood;
+    private DigitalChannel beamBreakSensor;
     private Limelight3A limelight;
-    double angle;
 
-    private final Pose startPose = new Pose(26, 64, Math.toRadians(180));
+    // ---------------- Shooter PID ----------------
+    private PIDFController b1, s1;
+
+    public static double bp = 0.01, bd = 0.0, bf = 0.0;
+    public static double sp = 0.01, sd = 0.0001, sf = 0.0;
+
+    private double targetVel = 1700;
+    private final double pSwitch = 50;
+
+    private final double farVelocity = 1550;
+    private final double nearVelocity = 1300;
+
+    private boolean shooterEnabled = false;
+
+    // Limelight aim (TAG = 20)
+    private final int AIM_TAG_ID = 24 ;
+    private final double AIM_DEADBAND_DEG = 2.5;
+    private final double AIM_KP = 0.015;
+    private final double AIM_TURN_MAX = 0.25;
+
+    // Kicker positions
+    private final double ballKickerUp = 0.22;
+    private final double ballKickerDown = 0.5;
+
+    // Intake behavior
+    private boolean intakeArmed = false;      // X arms, B disarms, JAM also disarms
+    private final double INTAKE_POWER = -1.0;
+
+    // Jam detect
+    private final double CURRENT_LIMIT = 2.0;
+    private final long SPIKE_TIME_MS = 1000;
+    private long jamStartTimeMs = 0;
+    private boolean jamTiming = false;
+
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
 
-        FrontLeft = hardwareMap.dcMotor.get("FL")   ;
-        FrontRight = hardwareMap.dcMotor.get("FR");
-        BackLeft = hardwareMap.dcMotor.get("BL");
-        BackRight = hardwareMap.dcMotor.get("BR");
+        frontLeft  = hardwareMap.dcMotor.get("FL");
+        frontRight = hardwareMap.dcMotor.get("FR");
+        backLeft   = hardwareMap.dcMotor.get("BL");
+        backRight  = hardwareMap.dcMotor.get("BR");
 
-        IntakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
-        IntakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        ShooterMotor = hardwareMap.dcMotor.get("shooter");
-        ShooterMotor2 = hardwareMap.dcMotor.get("shooter2");
-        //ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //ShooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ballKick = hardwareMap.get(Servo.class,("ballKick"));
-        hood = hardwareMap.get(Servo.class,("hood"));
+        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        shooterMotor = hardwareMap.dcMotor.get("shooter");
 
-        FrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        FrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        BackLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        ballKick = hardwareMap.get(Servo.class, "ballKick");
+        hood     = hardwareMap.get(Servo.class, "hood");
 
-        ShooterMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        beamBreakSensor = hardwareMap.get(DigitalChannel.class, "breakbeam");
+        beamBreakSensor.setMode(DigitalChannel.Mode.INPUT);
 
-        double slow_down_factor=0.85;
-        double slow_down_factor2=1.;
+        // KEEP YOUR EXACT MOTOR DIRECTIONS
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-
-
-        double intake_motor_power = 1;
-        double CURRENT_LIMIT=2.0;
-        long SPIKE_TIME_MS= 1000;
-        boolean intakeRunning= false;
-        long jamStart=0;
-
-        double power_x=0.75;
-        double power_y;
-        double y;
-        double F = 1.5;
-        double P = 0.5;
-        double I = 0.5;
-        double D = 0.5;
-
+        // Shooter PID
         b1 = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
         s1 = new PIDFController(new PIDFCoefficients(sp, 0, sd, sf));
-        b2 = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
-        s2 = new PIDFController(new PIDFCoefficients(sp, 0, sd, sf));
 
-
-        FrontRight.setPower(0);
-        BackLeft.setPower(0);
-        FrontLeft.setPower(0);
-        BackRight.setPower(0);
-
-        IntakeMotor.setPower(0);
-        ShooterMotor.setPower(0);
-
-        ElapsedTime timer = new ElapsedTime(SECONDS);
-
-        follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startPose == null ? new Pose() : startPose);
-        follower.update();
-
-        pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
-                .addPath(new Path(new BezierLine(follower::getPose, new Pose(60, 84))))
-                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, Math.toRadians(140), 0.8))
-                .build();
-
+        // Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight3A");
         limelight.setPollRateHz(100);
-        // telemetry.setMsTransmissionInterval(11);
-
         limelight.pipelineSwitch(0);
         limelight.start();
 
+        // Init
+        setDrivePower(0, 0, 0, 0);
+        intakeMotor.setPower(0);
+        shooterMotor.setPower(0);
+
+        shooterEnabled = false;
+        intakeArmed = false;
+        jamTiming = false;
+
         waitForStart();
+
         while (opModeIsActive()) {
 
-            //ShooterMotor.setPower(-0.45);
-            // ((DcMotorEx)ShooterMotor).setVelocityPIDFCoefficients(P, I, D, F);
-            // ((DcMotorEx)ShooterMotor).setVelocity(1150);
+            // Beam broken = TRUE when object blocks beam (your inversion)
+            boolean beamBroken = !beamBreakSensor.getState();
 
-            double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
-            b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-            s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-
-            if (Math.abs(targetvel - currentvel) < pSwitch) {
-                s1.updateError(targetvel - currentvel);
-                ShooterMotor.setPower(s1.run());
-            } else {
-                b1.updateError(targetvel - currentvel);
-                telemetry.addData("power1", b1.run());
-                ShooterMotor.setPower(b1.run());
-            }
-            telemetry.addData("velocity1", currentvel);
-            telemetry.addData("encoder1", ShooterMotor.getCurrentPosition());
-            if (gamepad1.dpad_up) {
-                IntakeMotor.setPower(1);
-            }
-            if (gamepad1.dpad_down) {
-                List<LLResultTypes.FiducialResult> r = limelight.getLatestResult().getFiducialResults();
-
-                LLResultTypes.FiducialResult target = null;
-                for (LLResultTypes.FiducialResult i : r) {
-                    if (i != null && i.getFiducialId() == 24) {
-                        target = i;
-                        break;
-                    }
-                }
-
-                if (target != null) {
-                    angle = target.getTargetXDegrees();
-                    telemetry.addData("angle", angle);
-                    //telemetry.addData("robotheading:", follower::getHeading);
-                }
-                while(angle>angle_positive)
-                {
-                    currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
-                    b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-                    s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-
-                    if (Math.abs(targetvel - currentvel) < pSwitch) {
-                        s1.updateError(targetvel - currentvel);
-                        ShooterMotor.setPower(s1.run());
-                    } else {
-                        b1.updateError(targetvel - currentvel);
-                        telemetry.addData("power1", b1.run());
-                        ShooterMotor.setPower(b1.run());
-                    }
-                    FrontRight.setPower(-power_rotation);
-                    BackLeft.setPower(power_rotation);
-                    FrontLeft.setPower(power_rotation);
-                    BackRight.setPower(-power_rotation);
-
-                    r = limelight.getLatestResult().getFiducialResults();
-
-                    target = null;
-                    for (LLResultTypes.FiducialResult i : r) {
-                        if (i != null && i.getFiducialId() == 24) {
-                            target = i;
-                            break;
-                        }
-                    }
-
-                    if (target != null) {
-                        angle = target.getTargetXDegrees();
-                        telemetry.addData("angle", angle);
-                        //telemetry.addData("robotheading:", follower::getHeading);
-                    }
-                }
-                while(angle<angle_negative)
-                {
-                    currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
-                    b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-                    s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-
-                    if (Math.abs(targetvel - currentvel) < pSwitch) {
-                        s1.updateError(targetvel - currentvel);
-                        ShooterMotor.setPower(s1.run());
-                    } else {
-                        b1.updateError(targetvel - currentvel);
-                        telemetry.addData("power1", b1.run());
-                        ShooterMotor.setPower(b1.run());
-                    }
-                    FrontRight.setPower(power_rotation);
-                    BackLeft.setPower(-power_rotation);
-                    FrontLeft.setPower(-power_rotation);
-                    BackRight.setPower(power_rotation);
-
-                    r = limelight.getLatestResult().getFiducialResults();
-
-                    target = null;
-                    for (LLResultTypes.FiducialResult i : r) {
-                        if (i != null && i.getFiducialId() == 24) {
-                            target = i;
-                            break;
-                        }
-                    }
-
-                    if (target != null) {
-                        angle = target.getTargetXDegrees();
-                        telemetry.addData("angle", angle);
-                        //telemetry.addData("robotheading:", follower::getHeading);
-                    }
-                }
-            }
-/*
-            double currentvel2 = ((DcMotorEx)ShooterMotor2).getVelocity();
-            b2.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-            s2.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-
-            if (Math.abs(targetvel - currentvel2) < pSwitch) {
-                s2.updateError(targetvel - currentvel2);
-                ShooterMotor2.setPower(s2.run());
-            } else {
-                b2.updateError(targetvel - currentvel2);
-                telemetry.addData("power2", b2.run());
-                ShooterMotor2.setPower(b2.run());
-            }
-*/
-
-            // ((DcMotorEx) ShooterMotor2).setVelocity(targetvel);
-            //  ((DcMotorEx) ShooterMotor).setVelocity(targetvel);
-            //double currentvel2 = ((DcMotorEx)ShooterMotor2).getVelocity();
-
-
-            double currentvel1 = ((DcMotorEx)ShooterMotor).getVelocity();
-            //
-            //((DcMotorEx)ShooterMotor).setPositionPIDFCoefficients(5.0);
-            telemetry.addData("velocity1", currentvel1);
-            //telemetry.addData("velocity2", currentvel2);
-            // telemetry.addData("encoder2", ShooterMotor2.getCurrentPosition());
-            telemetry.update();
-
-
-            // IntakeMotor.setPower(-1.);
-            y = -gamepad1.left_stick_y;
-            telemetry.addData("Y", y);
-            telemetry.update();
-            //Strafe Right
-            if (gamepad1.right_bumper) {
-
-                FrontLeft.setPower(power_x);
-                BackLeft.setPower(-power_x);
-                FrontRight.setPower(-power_x);
-                BackRight.setPower(power_x);
-            }
-
-            //Strafe Left
-            else if (gamepad1.left_bumper) {
-
-                FrontLeft.setPower(-power_x);
-                BackLeft.setPower(power_x);
-                FrontRight.setPower(power_x);
-                BackRight.setPower(-power_x);
-            }
-
-
-            if (y > 0.0) {
-                power_y = y * slow_down_factor;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            if (y < 0.0) {
-                power_y = y * slow_down_factor;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            //Turn antiClockwise
-            if (gamepad1.right_stick_x > 0.0) {
-                if (gamepad1.right_stick_y > 0.0) {
-                    power_y = gamepad1.right_stick_y * slow_down_factor;
-                } else {
-                    power_y = gamepad1.right_stick_x * slow_down_factor;
-                }
-
-                FrontLeft.setPower(-power_y);
-                BackLeft.setPower(-power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            //Turn Clockwise
-            if (gamepad1.right_stick_x < 0.0) {
-                if (gamepad1.right_stick_y < 0.0) {
-                    power_y = gamepad1.right_stick_y * slow_down_factor;
-                } else {
-                    power_y = gamepad1.right_stick_x * slow_down_factor;
-                }
-                FrontLeft.setPower(-power_y);
-                BackLeft.setPower(-power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-            if(gamepad1.dpad_left)
-            {
-                hood.setPosition(0.24);
-                targetvel = nearvelocity;
-
-            }
-            if (gamepad1.y) {
-                power_y = 1. * slow_down_factor2;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-            if (gamepad1.a) {
-                power_y = -1. * slow_down_factor2;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            if (!gamepad1.right_bumper && !gamepad1.left_bumper && gamepad1.right_stick_x == 0.0 && y==0. && !gamepad1.y && !gamepad1.a && gamepad1.left_trigger == 0.0 && gamepad1.right_trigger == 0.0){
-                FrontRight.setPower(0.0);
-                BackLeft.setPower(0.0);
-                FrontLeft.setPower(0.0);
-                BackRight.setPower(0.0);
-            }
-
+            // ---------------- Kicker + Intake latch ----------------
             if (gamepad1.x) {
-                intakeRunning=true;
-
-                ballKick.setPosition(ballkicker_down);
-            }
-            if(gamepad1.b){
-                intakeRunning = false;
-                IntakeMotor.setPower(0.0);
-                ballKick.setPosition(ballkicker_up);
-            }
-            if(intakeRunning){
-                IntakeMotor.setPower(-1.0);
-            }
-            else{
-                IntakeMotor.setPower(0.0);
+                ballKick.setPosition(ballKickerDown);
+                intakeArmed = true;     // arm intake
+                jamTiming = false;
             }
 
-            double intakeCurrent = IntakeMotor.getCurrent(CurrentUnit.AMPS);
+            if (gamepad1.b) {
+                ballKick.setPosition(ballKickerUp);
+                intakeArmed = false;    // disarm intake
+                intakeMotor.setPower(0.0);
+                jamTiming = false;
+            }
 
-            if (intakeRunning && intakeCurrent > CURRENT_LIMIT) {
-                if (jamStart == 0) {
-                    jamStart = System.currentTimeMillis();
+            // Intake runs ONLY when armed AND beam is broken
+            boolean shouldRunIntake = intakeArmed && beamBroken;
+
+            if (shouldRunIntake) {
+                intakeMotor.setPower(INTAKE_POWER);
+
+                // Jam detection while intake is running
+                double amps = intakeMotor.getCurrent(CurrentUnit.AMPS);
+
+                if (amps > CURRENT_LIMIT && !jamTiming) {
+                    jamTiming = true;
+                    jamStartTimeMs = System.currentTimeMillis();
                 }
-                if (System.currentTimeMillis() - jamStart >= SPIKE_TIME_MS) {
-                    intakeRunning = false;
-                    IntakeMotor.setPower(0.0);
+
+                if (jamTiming && amps > CURRENT_LIMIT
+                        && (System.currentTimeMillis() - jamStartTimeMs) >= SPIKE_TIME_MS) {
+                    // JAM: stop and DISARM until next X press
+                    intakeMotor.setPower(0.0);
+                    intakeArmed = false;     // <<< key change you asked for
+                    jamTiming = false;
+                }
+
+                if (amps <= CURRENT_LIMIT) {
+                    jamTiming = false;
+                }
+
+            } else {
+                intakeMotor.setPower(0.0);
+                jamTiming = false;
+            }
+
+            // ---------------- Hood presets + Shooter enable ----------------
+            if (gamepad1.dpad_left) {
+                hood.setPosition(0.24);
+                targetVel = nearVelocity;
+                shooterEnabled = true;
+            }
+            if (gamepad1.dpad_right) {
+                hood.setPosition(0.24);
+                targetVel = farVelocity;
+                shooterEnabled = true;
+            }
+
+            // ---------------- Drive inputs ----------------
+            double drive  = -gamepad1.left_stick_y;
+            double strafe =  gamepad1.left_stick_x;
+            double turn   =  gamepad1.right_stick_x;
+
+            if (gamepad1.right_bumper) strafe = 1.0;
+            if (gamepad1.left_bumper)  strafe = -1.0;
+
+            if (gamepad1.y) drive = 1.0;
+            if (gamepad1.a) drive = -1.0;
+
+            if (gamepad1.left_trigger > 0.05)  strafe = -1.0;
+            if (gamepad1.right_trigger > 0.05) strafe = 1.0;
+
+            // ---------------- Limelight aim (dpad_down aims + shooter ON) ----------------
+            if (gamepad1.dpad_down) {
+                shooterEnabled = true;
+
+                AimData aim = getAimData(AIM_TAG_ID);
+                if (aim != null) {
+                    telemetry.addData("AimTag", AIM_TAG_ID);
+                    telemetry.addData("TagX(deg)", aim.tagXDeg);
+
+                    if (Math.abs(aim.tagXDeg) > AIM_DEADBAND_DEG) {
+                        turn = clamp(aim.tagXDeg * AIM_KP, -AIM_TURN_MAX, AIM_TURN_MAX);
+                    }
+                } else {
+                    telemetry.addData("Aim", "No tag");
+                }
+            }
+
+            // Mecanum mix + normalize
+            double fl = drive + strafe + turn;
+            double fr = drive - strafe - turn;
+            double bl = drive - strafe + turn;
+            double br = drive + strafe - turn;
+
+            double max = Math.max(1.0, Math.max(Math.abs(fl),
+                    Math.max(Math.abs(fr), Math.max(Math.abs(bl), Math.abs(br)))));
+
+            fl /= max; fr /= max; bl /= max; br /= max;
+
+            setDrivePower(fl, bl, fr, br);
+
+            // ---------------- Shooter velocity hold ----------------
+            double currentVel = ((DcMotorEx) shooterMotor).getVelocity();
+
+            if (shooterEnabled) {
+                b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
+                s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+
+                double error = targetVel - currentVel;
+                if (Math.abs(error) < pSwitch) {
+                    s1.updateError(error);
+                    shooterMotor.setPower(s1.run());
+                } else {
+                    b1.updateError(error);
+                    shooterMotor.setPower(b1.run());
                 }
             } else {
-                jamStart = 0;
+                shooterMotor.setPower(0.0);
             }
-            telemetry.addData("Intake Current", intakeCurrent);
 
-
-            if (gamepad1.dpad_right ) {
-
-                // if (timer.time() < 0.8) {
-                //IntakeMotor.setPower(-1.);
-                hood.setPosition(0.24);
-                targetvel = farvelocity;
-                // }
-            }
-            // if (gamepad2.left_trigger != 0.0) {
-
-
-            //  IntakeMotor.setPower(-intake_motor_power);
-            // }
-
-            if (gamepad1.left_trigger != 0.0) {
-                FrontLeft.setPower(-power_x*5);
-                BackLeft.setPower(power_x*5);
-                FrontRight.setPower(power_x*5);
-                BackRight.setPower(-power_x*5);
-            }
-            if (gamepad1.right_trigger!=0.0) {
-                FrontLeft.setPower(power_x*5);
-                BackLeft.setPower(-power_x*5);
-                FrontRight.setPower(-power_x*5);
-                BackRight.setPower(power_x*5);
-            }
-            // if (gamepad2.dpad_left) {
-            // IntakeMotor.setPower(0);
-            // }
-
+            // Telemetry
+            telemetry.addData("BeamBroken", beamBroken);
+            telemetry.addData("IntakeArmed", intakeArmed);
+            telemetry.addData("IntakeRunning", shouldRunIntake);
+            telemetry.addData("Shooter Enabled", shooterEnabled);
+            telemetry.addData("Shooter Vel", currentVel);
+            telemetry.addData("Target Vel", shooterEnabled ? targetVel : 0.0);
+            telemetry.update();
         }
     }
-    //method to wait safely with stop button working if needed. Use this instead of sleep
-    public void safeWaitSeconds(double time) {
 
-        b1.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-        s1.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-        b2.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-        s2.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
+    private void setDrivePower(double fl, double bl, double fr, double br) {
+        frontLeft.setPower(fl);
+        backLeft.setPower(bl);
+        frontRight.setPower(fr);
+        backRight.setPower(br);
+    }
 
+    private static class AimData {
+        final double tagXDeg;
+        final double distanceIn;
+        AimData(double tagXDeg, double distanceIn) {
+            this.tagXDeg = tagXDeg;
+            this.distanceIn = distanceIn;
+        }
+    }
 
+    private AimData getAimData(int tagId) {
+        LLResult res = limelight.getLatestResult();
+        if (res == null) return null;
 
-        double power_x=0.5;
-        double power_y,y;
-        double slow_down_factor=0.5;
-        double slow_down_factor2=1.;
-        y = -gamepad1.left_stick_y;
-        ElapsedTime timer = new ElapsedTime(SECONDS);
-        timer.reset();
-        while (!isStopRequested() && timer.time() < time) {
-            double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
-            if (Math.abs(targetvel - currentvel) < pSwitch) {
-                s1.updateError(targetvel - currentvel);
-                ShooterMotor.setPower(s1.run());
-            } else {
-                b1.updateError(targetvel - currentvel);
-                ShooterMotor.setPower(b1.run());
-            }
+        List<LLResultTypes.FiducialResult> r = res.getFiducialResults();
+        if (r == null) return null;
 
-            double currentvel2 = ((DcMotorEx)ShooterMotor).getVelocity();
-            if (Math.abs(targetvel - currentvel2) < pSwitch) {
-                s2.updateError(targetvel - currentvel2);
-                ShooterMotor.setPower(s2.run());
-            } else {
-                b2.updateError(targetvel - currentvel2);
-                ShooterMotor.setPower(b2.run());
-            }
-            //Strafe Right
-            if (gamepad1.right_bumper) {
+        for (LLResultTypes.FiducialResult f : r) {
+            if (f != null && f.getFiducialId() == tagId) {
+                double xIn = (f.getCameraPoseTargetSpace().getPosition().x / DistanceUnit.mPerInch);
+                double zIn = (f.getCameraPoseTargetSpace().getPosition().z / DistanceUnit.mPerInch) + 8;
 
-                FrontLeft.setPower(power_x);
-                BackLeft.setPower(-power_x);
-                FrontRight.setPower(-power_x);
-                BackRight.setPower(power_x);
-            }
+                Vector e = new Vector();
+                e.setOrthogonalComponents(xIn, zIn);
 
-            //Strafe Left
-            else if (gamepad1.left_bumper) {
-
-                FrontLeft.setPower(-power_x);
-                BackLeft.setPower(power_x);
-                FrontRight.setPower(power_x);
-                BackRight.setPower(-power_x);
-            }
-
-
-
-
-            if (y > 0.0) {
-                power_y = y * slow_down_factor;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            if (y < 0.0) {
-                power_y = y * slow_down_factor;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            //Turn antiClockwise
-            if (gamepad1.right_stick_x > 0.0) {
-                if (gamepad1.right_stick_y > 0.0) {
-                    power_y = gamepad1.right_stick_y * slow_down_factor;
-                } else {
-                    power_y = gamepad1.right_stick_x * slow_down_factor;
-                }
-
-                FrontLeft.setPower(-power_y);
-                BackLeft.setPower(-power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            //Turn Clockwise
-            if (gamepad1.right_stick_x < 0.0) {
-                if (gamepad1.right_stick_y < 0.0) {
-                    power_y = gamepad1.right_stick_y * slow_down_factor;
-                } else {
-                    power_y = gamepad1.right_stick_x * slow_down_factor;
-                }
-                FrontLeft.setPower(-power_y);
-                BackLeft.setPower(-power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            if (gamepad1.y) {
-                power_y = 1. * slow_down_factor2;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-            if (gamepad1.a) {
-                power_y = -1. * slow_down_factor2;
-                FrontLeft.setPower(power_y);
-                BackLeft.setPower(power_y);
-                FrontRight.setPower(power_y);
-                BackRight.setPower(power_y);
-            }
-
-
-
-            if (!gamepad1.right_bumper && !gamepad1.left_bumper && gamepad1.right_stick_x == 0.0 && y == 0. && !gamepad1.y && !gamepad1.a && gamepad1.left_trigger == 0.0 && gamepad1.right_trigger == 0.0) {
-                FrontRight.setPower(0.0);
-                BackLeft.setPower(0.0);
-                FrontLeft.setPower(0.0);
-                BackRight.setPower(0.0);
+                return new AimData(f.getTargetXDegrees(), e.getMagnitude());
             }
         }
+        return null;
+    }
+
+    private double clamp(double v, double lo, double hi) {
+        return Math.max(lo, Math.min(hi, v));
     }
 }

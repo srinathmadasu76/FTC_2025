@@ -41,11 +41,11 @@ public class Red_RearStartingPinpoint extends OpMode {
     double waittime_transfer = 0.3;
     double hoodposition = 0.24;
     double farvelocity = 1550;
-    double nearvelocity = 1250;
+    double nearvelocity = 1100;
 
     double targetvel = farvelocity;
-    double power_pickup = 0.85;
-    double power_shooting = 0.95;
+    double power_pickup = 0.5;
+    double power_shooting = 1.;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
     double waittime_offset=0.2;
@@ -55,9 +55,9 @@ public class Red_RearStartingPinpoint extends OpMode {
      * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
      */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(80, 12, Math.toRadians(65));
-    private final Pose scorePose1 = new Pose(84, 16, Math.toRadians(65));
-    private final Pose scorePose2 = new Pose(78, 84, Math.toRadians(40));
+    private final Pose scorePose = new Pose(84, 20, Math.toRadians(64));//80,12
+    private final Pose scorePose1 = new Pose(84, 20, Math.toRadians(64));
+    private final Pose scorePose2 = new Pose(96, 96, Math.toRadians(45));
     //private final Pose scorePose = new Pose(19, 111);
 
     /**
@@ -66,16 +66,16 @@ public class Red_RearStartingPinpoint extends OpMode {
     //private final Pose pickup1Pose = new Pose(23, 128);
     private final Pose pickup1Pose_lane1 = new Pose(96, 33, Math.toRadians(0));
     private final Pose pickup2Pose_lane1 = new Pose(118, 33, Math.toRadians(0));
-    private final Pose pickup3Pose_lane1 = new Pose(130, 33, Math.toRadians(0));
+    private final Pose pickup3Pose_lane1 = new Pose(134, 33, Math.toRadians(0));
 
     private final Pose pickup1Pose_lane2 = new Pose(96, 60, Math.toRadians(0));
     private final Pose pickup2Pose_lane2 = new Pose(118, 60, Math.toRadians(0));
-    private final Pose pickup3Pose_lane2 = new Pose(130, 60, Math.toRadians(0));
+    private final Pose pickup3Pose_lane2 = new Pose(129, 60, Math.toRadians(0));
 
-    private final Pose pickup1Pose_lane3 = new Pose(96, 84, Math.toRadians(0));
-    private final Pose pickup2Pose_lane3 = new Pose(118, 84, Math.toRadians(0));
-    private final Pose pickup3Pose_lane3 = new Pose(124, 84, Math.toRadians(0));
-    private final Pose Park = new Pose(78, 60, Math.toRadians(45));
+    private final Pose pickup1Pose_lane3 = new Pose(96, 82, Math.toRadians(0));
+    private final Pose pickup2Pose_lane3 = new Pose(118, 82, Math.toRadians(0));
+    private final Pose pickup3Pose_lane3 = new Pose(124, 82, Math.toRadians(0));
+    private final Pose Park = new Pose(96, 70, Math.toRadians(45));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -213,7 +213,7 @@ public class Red_RearStartingPinpoint extends OpMode {
                 telemetry.addData("x", follower.getPose().getX());
                 telemetry.addData("y", follower.getPose().getY());
 
-                follower.setMaxPower(power_shooting);
+
                 follower.followPath(scorePreload);
 
                 setPathState(1);
@@ -228,6 +228,7 @@ public class Red_RearStartingPinpoint extends OpMode {
 
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
                 //if (follower.getPose().getX() > (scorePose.getX() - 1) && follower.getPose().getY() > (scorePose.getY() - 1)) {
+                follower.setMaxPower(power_shooting);
                 if (!follower.isBusy()) {
                     safeWaitSeconds(2.);
                     IntakeMotor.setPower(0.);
@@ -252,7 +253,7 @@ public class Red_RearStartingPinpoint extends OpMode {
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(grabPickup1_lane1, true);
                     //follower.followPath(intakePickup1, true);
-                    setPathState(2);
+                    setPathState(3);
                 }
                 break;
             case 2:
@@ -290,7 +291,7 @@ public class Red_RearStartingPinpoint extends OpMode {
                 break;
 
             case 4:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
                     // intake.grab(pathTimer);
@@ -328,11 +329,11 @@ public class Red_RearStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
                     follower.followPath(grabPickup1_lane2, true);
-                    setPathState(6);
+                    setPathState(7);
                 }
                 break;
             case 6:
-                follower.setMaxPower(power_pickup);
+
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
@@ -364,7 +365,7 @@ public class Red_RearStartingPinpoint extends OpMode {
                 break;
 
             case 8:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
                     // intake.grab(pathTimer);
@@ -406,7 +407,7 @@ public class Red_RearStartingPinpoint extends OpMode {
                 }
                 break;
             case 10:
-                follower.setMaxPower(power_pickup);
+
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
@@ -433,7 +434,7 @@ public class Red_RearStartingPinpoint extends OpMode {
                 opmodeTimer.resetTimer();
                 break;
             case 12:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
                     // intake.grab(pathTimer);

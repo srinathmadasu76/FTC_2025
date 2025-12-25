@@ -21,6 +21,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 /*
@@ -55,8 +56,9 @@ public class SensorLimelight3A extends OpMode {
     DcMotor BackLeft = null;
     DcMotor BackRight = null;
     public static double bp = 0.01, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
-    double targetvel = 1700;
+    double targetvel = 1100;
     double pSwitch = 50;
+    Servo hood = null;
     private PIDFController b, s;
     double angle;
     double power_rotation = 0.2;
@@ -70,6 +72,9 @@ public class SensorLimelight3A extends OpMode {
         FrontRight = hardwareMap.dcMotor.get("FR");
         BackLeft = hardwareMap.dcMotor.get("BL");
         BackRight = hardwareMap.dcMotor.get("BR");
+        ShooterMotor = hardwareMap.dcMotor.get("shooter");
+        hood = hardwareMap.get(Servo.class,("hood"));
+        hood.setPosition(0.24);
         limelight = hardwareMap.get(Limelight3A.class, "limelight3A");
         limelight.setPollRateHz(100);
         // telemetry.setMsTransmissionInterval(11);
@@ -244,6 +249,7 @@ public class SensorLimelight3A extends OpMode {
                         telemetry.addData("power1", b.run());
                         ShooterMotor.setPower(b.run());
                     }
+                    currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
                     telemetry.addData("velocity1", currentvel);
 
                     // Access detector results

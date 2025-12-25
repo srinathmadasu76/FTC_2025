@@ -18,8 +18,8 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue_RearStartingPinpoint", group = "Auton")
-public class Blue_RearStartingPinpoint extends OpMode {
+@Autonomous(name = "Blue_sideshooting", group = "Auton")
+public class Blue_sideshooting extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -32,49 +32,43 @@ public class Blue_RearStartingPinpoint extends OpMode {
     private PIDFController b, s;
 
     private double t = 0;
-    public static double bp = 0.01, bd = 0.0, bf = 0.0, sp = 0.01, sd = 0.0001, sf = 0.0;
+    public static double bp = 0.02, bd = 0.0, bf = 0.0, sp = 0.02, sd = 0.0001, sf = 0.0;
 
-
-
+    double targetvel = 1000;
     double pSwitch = 50;
-    double waittime = 0.4;
-    double waittime_transfer = 0.3;
-    double hoodposition = 0.24;
-
-    double power_pickup = 0.5;
+    double waittime = 1;
+    double waittime_transfer = 1;
+    double power_pickup = 0.85;//0.85
     double power_shooting = 1.;
-    double farvelocity = 1550;
-    double nearvelocity = 1100;
     double ballkicker_up = 0.72;
     double ballkicker_down = 0.28;
-    double targetvel = farvelocity;
-    private final Pose startPose = new Pose(60, 10, Math.toRadians(90));
+    private final Pose startPose = new Pose(18, 120, Math.toRadians(180));
 
     /**
      * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
      */
     //private final Pose scorePose = new Pose(14, 129, Math.toRadians(45));
-    private final Pose scorePose = new Pose(60, 20, Math.toRadians(110));
-    private final Pose scorePose1 = new Pose(60, 20, Math.toRadians(120));
-    private final Pose scorePose2 = new Pose(48, 96, Math.toRadians(140));//66,78
+    private final Pose scorePose = new Pose(50, 130, Math.toRadians(180));
+    private final Pose scorePose1 = new Pose(68, 80, Math.toRadians(140));
+    private final Pose scorePose2 = new Pose(68, 88, Math.toRadians(140));
+    private final Pose Park = new Pose(68, 64, Math.toRadians(140));
     //private final Pose scorePose = new Pose(19, 111);
 
     /**
      * Lowest (First) Sample from the Spike Mark
      */
     //private final Pose pickup1Pose = new Pose(23, 128);
-    private final Pose pickup1Pose_lane1 = new Pose(48, 36, Math.toRadians(180));
-    private final Pose pickup2Pose_lane1 = new Pose(26, 36, Math.toRadians(180));
-    private final Pose pickup3Pose_lane1 = new Pose(15, 36, Math.toRadians(180));
+    private final Pose pickup1Pose_lane1 = new Pose(48, 87, Math.toRadians(180));
+    private final Pose pickup2Pose_lane1 = new Pose(26, 87, Math.toRadians(180));//26
+    private final Pose pickup3Pose_lane1 = new Pose(16, 87, Math.toRadians(180));//15
 
-    private final Pose pickup1Pose_lane2 = new Pose(48, 60, Math.toRadians(180));
-    private final Pose pickup2Pose_lane2 = new Pose(26, 60, Math.toRadians(180));
-    private final Pose pickup3Pose_lane2 = new Pose(15, 60, Math.toRadians(180));
+    private final Pose pickup1Pose_lane2 = new Pose(48, 62, Math.toRadians(180));
+    private final Pose pickup2Pose_lane2 = new Pose(26, 62, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(15, 62, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane3 = new Pose(48, 84, Math.toRadians(180));
-    private final Pose pickup2Pose_lane3 = new Pose(26, 84, Math.toRadians(180));
-    private final Pose pickup3Pose_lane3 = new Pose(15, 84, Math.toRadians(180));
-    private final Pose Park = new Pose(48, 70, Math.toRadians(140));
+    private final Pose pickup1Pose_lane3 = new Pose(48, 38, Math.toRadians(180));
+    private final Pose pickup2Pose_lane3 = new Pose(26, 38, Math.toRadians(180));
+    private final Pose pickup3Pose_lane3 = new Pose(15, 38, Math.toRadians(180));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload;
@@ -126,7 +120,6 @@ public class Blue_RearStartingPinpoint extends OpMode {
                 .build();
         grabPickup2_lane1 = follower.pathBuilder()
                 .addPath(new BezierLine((pickup1Pose_lane1), (pickup2Pose_lane1)))
-                //.setConstantHeadingInterpolation(pickup1Pose_lane1.getHeading())
                 //.setTangentHeadingInterpolation()
                 .setLinearHeadingInterpolation(pickup1Pose_lane1.getHeading(), pickup2Pose_lane1.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
@@ -153,7 +146,7 @@ public class Blue_RearStartingPinpoint extends OpMode {
                 .build();
         grabPickup2_lane2 = follower.pathBuilder()
                 .addPath(new BezierLine((pickup1Pose_lane2), (pickup2Pose_lane2)))
-                //.setConstantHeadingInterpolation(pickup1Pose_lane2.getHeading())
+                //.setTangentHeadingInterpolation()
                 .setLinearHeadingInterpolation(pickup1Pose_lane2.getHeading(), pickup2Pose_lane2.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
@@ -194,9 +187,9 @@ public class Blue_RearStartingPinpoint extends OpMode {
                 //.setTangentHeadingInterpolation()
                 .build();
         park = follower.pathBuilder()
-                .addPath(new BezierLine((scorePose1), (Park)))
+                .addPath(new BezierLine((scorePose2), (Park)))
                 //.setTangentHeadingInterpolation()
-                .setLinearHeadingInterpolation(scorePose1.getHeading(), Park.getHeading())
+                .setLinearHeadingInterpolation(scorePose2.getHeading(), Park.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
     }
@@ -212,14 +205,13 @@ public class Blue_RearStartingPinpoint extends OpMode {
             case 0:
                 telemetry.addData("x", follower.getPose().getX());
                 telemetry.addData("y", follower.getPose().getY());
-
-
+                follower.setMaxPower(power_shooting);
                 follower.followPath(scorePreload);
 
                 setPathState(1);
                 break;
             case 1:
-                follower.setMaxPower(power_shooting);
+
                 /* You could check for
                 - Follower State: "if(!follower.isBusy() {}" (Though, I don't recommend this because it might not return due to holdEnd
                 - Time: "if(pathTimer.getElapsedTimeSeconds() > 1) {}"
@@ -228,8 +220,10 @@ public class Blue_RearStartingPinpoint extends OpMode {
 
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
                 //if (follower.getPose().getX() > (scorePose.getX() - 1) && follower.getPose().getY() > (scorePose.getY() - 1)) {
+
                 if (!follower.isBusy()) {
-                    safeWaitSeconds(2.);
+                    //safeWaitSeconds(4);
+                    safeWaitSeconds(4);
                     IntakeMotor.setPower(0.);
 
                     ballStopper.setPosition(ballkicker_up);
@@ -249,33 +243,21 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
+                    //safeWaitSeconds(3);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    follower.followPath(grabPickup1_lane1, true);
+                    //follower.followPath(grabPickup1_lane1, true);
                     //follower.followPath(intakePickup1, true);
-                    setPathState(3);
+                    // setPathState(2);
+                    //IntakeMotor.setPower(-1.);
+                    //safeWaitSeconds(17);
+                    //follower.followPath(park);
+
+                    setPathState(-1);
                 }
                 break;
+
             case 2:
-
-                /* You could check for
-                - Follower State: "if(!follower.isBusy() {}" (Though, I don't recommend this because it might not return due to holdEnd
-                - Time: "if(pathTimer.getElapsedTimeSeconds() > 1) {}"
-                - Robot Position: "if(follower.getPose().getX() > 36) {}"
-                */
-
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                //if (follower.getPose().getX() > (scorePose.getX() - 1) && follower.getPose().getY() > (scorePose.getY() - 1)) {
-
-                if (!follower.isBusy()) {
-
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    follower.followPath(grabPickup2_lane1, true);
-                    //follower.followPath(intakePickup1, true);
-                    setPathState(3);
-                }
-                break;
-            case 3:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     // intake.grab(pathTimer);
@@ -283,56 +265,38 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
                     //intake.grab(pathTimer);
 
-                    follower.followPath(grabPickup3_lane1, true);
+                    follower.followPath(grabPickup2_lane1, true);
                     // follower.followPath(grabPickup1, true);
-                    setPathState(4);
+                    setPathState(3);
                 }
-                opmodeTimer.resetTimer();
+
                 break;
 
-            case 4:
-                follower.setMaxPower(power_pickup);
-                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
+            case 3:
+                if (!follower.isBusy()) {
 
                     // intake.grab(pathTimer);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     //follower.followPath(intakePickup2,true);
+                    follower.followPath(grabPickup3_lane1, true);
+                    setPathState(4);
+                }
+                opmodeTimer.resetTimer();
+                break;
+            case 4:
+
+
+                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds()>2) {
+                    //follower.breakFollowing();
+                    //intake.grab(pathTimer);
+                    //follower.followPath(scorePickup1, true);
                     follower.followPath(scorePickup1, true);
                     setPathState(5);
                 }
                 break;
             case 5:
-                IntakeMotor.setPower(0.);
                 follower.setMaxPower(power_shooting);
-
-                if (!follower.isBusy()) {
-                    //follower.breakFollowing();
-                    //intake.grab(pathTimer);
-                    //follower.followPath(scorePickup1, true);
-                    IntakeMotor.setPower(0.);
-
-                    ballStopper.setPosition(ballkicker_up);
-
-                    safeWaitSeconds(waittime);
-
-                    ballStopper.setPosition(ballkicker_down);
-                    safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(waittime_transfer);
-                    ballStopper.setPosition(ballkicker_up);
-                    safeWaitSeconds(waittime);
-                    ballStopper.setPosition(ballkicker_down);
-                    safeWaitSeconds(waittime);
-                    IntakeMotor.setPower(-1.);
-                    safeWaitSeconds(waittime_transfer);
-                    ballStopper.setPosition(ballkicker_up);
-                    safeWaitSeconds(waittime);
-                    ballStopper.setPosition(ballkicker_down);
-                    follower.followPath(grabPickup1_lane2, true);
-                    setPathState(7);
-                }
-                break;
-            case 6:
+                IntakeMotor.setPower(0.);
 
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
@@ -342,14 +306,32 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     //safeWaitSeconds(0.3);
 
                     //safeWaitSeconds(1.2);
+                    IntakeMotor.setPower(0.);
 
+                    ballStopper.setPosition(ballkicker_up);
+
+                    safeWaitSeconds(waittime);
+
+                    ballStopper.setPosition(ballkicker_down);
+                    safeWaitSeconds(waittime);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
+                    ballStopper.setPosition(ballkicker_up);
+                    safeWaitSeconds(waittime);
+                    ballStopper.setPosition(ballkicker_down);
+                    safeWaitSeconds(waittime);
+                    IntakeMotor.setPower(-1.);
+                    safeWaitSeconds(waittime_transfer);
+                    ballStopper.setPosition(ballkicker_up);
+                    safeWaitSeconds(waittime);
+                    ballStopper.setPosition(ballkicker_down);
                     //safeWaitSeconds(1.5);
-                    follower.followPath(grabPickup2_lane2, true);
-                    setPathState(7);
+                    follower.followPath(grabPickup1_lane2, true);
+                    setPathState(6);
                 }
                 break;
-            case 7:
-
+            case 6:
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     // intake.grab(pathTimer);
@@ -357,20 +339,31 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
                     //intake.grab(pathTimer);
 
-                    follower.followPath(grabPickup3_lane2, true);
+                    follower.followPath(grabPickup2_lane2, true);
                     // follower.followPath(grabPickup1, true);
-                    setPathState(8);
+                    setPathState(7);
                 }
-                opmodeTimer.resetTimer();
+
                 break;
 
-            case 8:
-                follower.setMaxPower(power_pickup);
-                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds()>2) {
+            case 7:
+                if (!follower.isBusy()) {
 
                     // intake.grab(pathTimer);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     //follower.followPath(intakePickup2,true);
+                    follower.followPath(grabPickup3_lane2, true);
+                    setPathState(8);
+                }
+                opmodeTimer.resetTimer();
+                break;
+            case 8:
+
+
+                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds()>2) {
+                    //follower.breakFollowing();
+                    //intake.grab(pathTimer);
+                    //follower.followPath(scorePickup1, true);
                     follower.followPath(scorePickup2, true);
                     setPathState(9);
                 }
@@ -382,7 +375,11 @@ public class Blue_RearStartingPinpoint extends OpMode {
                 if (!follower.isBusy()) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
-                    //follower.followPath(scorePickup1, true);
+                    //intake.grab(pathTimer);
+                    //IntakeMotor.setPower(0.);
+                    //safeWaitSeconds(0.3);
+
+                    //safeWaitSeconds(1.2);
                     IntakeMotor.setPower(0.);
 
                     ballStopper.setPosition(ballkicker_up);
@@ -402,13 +399,37 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     ballStopper.setPosition(ballkicker_up);
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
+                    //safeWaitSeconds(1.5);
                     follower.followPath(grabPickup1_lane3, true);
-                    setPathState(11);
+                    setPathState(10);
                 }
                 break;
             case 10:
-
+                follower.setMaxPower(power_pickup);
                 if (!follower.isBusy()) {
+                    //follower.breakFollowing();
+                    //intake.grab(pathTimer);
+                    //follower.followPath(scorePickup1, true);
+                    // follower.followPath(scorePickup1, true);
+                    follower.followPath(grabPickup2_lane3, true);
+                    setPathState(11);
+                }
+                break;
+            case 11:
+                if (!follower.isBusy()) {
+
+                    // intake.grab(pathTimer);
+                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
+                    //follower.followPath(intakePickup2,true);
+                    follower.followPath(grabPickup3_lane3, true);
+                    setPathState(12);
+                }
+                opmodeTimer.resetTimer();
+                break;
+            case 12:
+
+
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
                     //follower.breakFollowing();
                     //intake.grab(pathTimer);
                     //intake.grab(pathTimer);
@@ -417,29 +438,8 @@ public class Blue_RearStartingPinpoint extends OpMode {
 
                     //safeWaitSeconds(1.2);
 
-                    //safeWaitSeconds(1.5);
-                    follower.followPath(grabPickup2_lane3, true);
-                    setPathState(11);
-                }
-                break;
-            case 11:
-                if (!follower.isBusy()) {
-                    //follower.breakFollowing();
-                    //intake.grab(pathTimer);
-                    //follower.followPath(scorePickup1, true);
-                    // follower.followPath(scorePickup1, true);
-                    follower.followPath(grabPickup3_lane3, true);
-                    setPathState(12);
-                }
-                opmodeTimer.resetTimer();
-                break;
-            case 12:
-                follower.setMaxPower(power_pickup);
-                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds()>2) {
 
-                    // intake.grab(pathTimer);
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    //follower.followPath(intakePickup2,true);
+                    //safeWaitSeconds(1.5);
                     follower.followPath(scorePickup3, true);
                     setPathState(13);
                 }
@@ -448,20 +448,10 @@ public class Blue_RearStartingPinpoint extends OpMode {
                 follower.setMaxPower(power_shooting);
                 IntakeMotor.setPower(0.);
                 if (!follower.isBusy()) {
-                    targetvel = nearvelocity;
-                    hoodposition = 0.24;
-                    hood.setPosition(hoodposition);
-                    double currentvel = ((DcMotorEx)ShooterMotor).getVelocity();
-                    b.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
-                    s.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-                    if (Math.abs(targetvel - currentvel) < pSwitch) {
-                        s.updateError(targetvel - currentvel);
-                        ShooterMotor.setPower(s.run());
-                    } else {
-                        b.updateError(targetvel - currentvel);
-                        ShooterMotor.setPower(b.run());
-                    }
 
+                    // intake.grab(pathTimer);
+                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
+                    //follower.followPath(intakePickup2,true);
                     IntakeMotor.setPower(0.);
 
                     ballStopper.setPosition(ballkicker_up);
@@ -482,17 +472,6 @@ public class Blue_RearStartingPinpoint extends OpMode {
                     safeWaitSeconds(waittime);
                     ballStopper.setPosition(ballkicker_down);
                     follower.followPath(park, true);
-
-                    setPathState(14);
-                }
-                break;
-            case 14:
-                if (!follower.isBusy()) {
-
-                    // intake.grab(pathTimer);
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    //follower.followPath(intakePickup2,true);
-
                     setPathState(-1);
                 }
                 break;
@@ -576,7 +555,7 @@ public class Blue_RearStartingPinpoint extends OpMode {
         hood = hardwareMap.get(Servo.class,("hood"));
         //ShooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ballStopper.setPosition(ballkicker_down);
-        hood.setPosition(hoodposition);
+        hood.setPosition(0.32);
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
         s = new PIDFController(new PIDFCoefficients(sp, 0, sd, sf));
 
