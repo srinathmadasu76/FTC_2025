@@ -1,0 +1,25 @@
+Auton:
+Auton Strategy:
+Our game strategy starts in the autonomous period. We have two variants of the code. The fist variant starts near the goal. We back up into the edge of the large triangle and shoot our three preloads. Then, we go to the first lane and pick up the three balls. We go back to the same spot along the triangle and shoot the balls. Next, we go to the second lane, pick the three balls up, and shoot them. Finally, we pick up the balls on the last lane and shoot them to finish our autonomous period. The second variant of the code starts inside the small triangle along the wall. We shoot our three preloads from the corner of the small triangle and go and grab the balls from the third lane. We return to the triangle and shoot our balls again. Next, we go to the second lane and grab all three artifacts. We score them and move to the first lane. We pick the balls up, but this time, we shoot from the edge of the large triangle to complete the autonomous period. In both variants, we aim to score 12 balls, or [blank] points
+Front Start Point Strategy (Blue):
+   
+Back Starting Strategy (Blue):
+   
+Strategies with Alliances:
+During the actual meets, our alliances would sometimes have autonomous programs that would crash into our robot, so we would change the strategy up to accommodate with their strategy. Examples of how we changed our strategy to perform better with our alliances include stopping the code midway through so that our robots wouldn’t clash, or using different codes that would shoot from different positions so that we would avoid out alliance’s robot.
+
+When our alliance can get the three rows as well:
+Sometimes, when our opponents can get all three lanes of balls, we get the last lane only. 
+Other times, when our opponent can still get all three lanes, or only the first lane, we get the second and third lanes.
+ 
+Our shooting positions also vary with where our alliance’s robot moves during the autonomous period. We shoot from far, close, or along the wall between the two goals.
+Our three shooting positions:
+     
+Pedro Pathing:
+This year, we used Pedro Pathing to improve positioning during the autonomous period. We learned from our previous season that Pedro Pathing was one of the most accurate methods of locating and directing our robot. Pedro Pathing works by using Bezier curve generation to create trajectories for the robot, and those curves will help the robot continuously self-correct during the match, making it more accurate than other programs such as roadrunner and just PID by itself.
+
+Autonomous Iterations:
+In the beginning of the season, obviously the autonomous code needed lots of improvement. One of the first things that we did was retune the robot. This was because of the constant changes we were making to it, which could have offset different constants such as the weight of the robot or the location of the odometer pods. Another reason the coordinates may not have been as accurate was due to the fact that we were using three wheel odometry as our locator, and so we added a Pinpoint odometry computer onto our robot in the middle of the season. This was because we found that using pedropathing and odometer pods themselves was not enough, and so we also had to tune and write code for that. We were constantly making changes to the code’s locations and the scoring positions due to the fact that our positioning kept on varying. One thing we learned from this experience is that we shouldn’t change the code based on one or two tests but instead try to find patterns and check what else might have been going wrong instead of just jumping to the conclusion that the location was wrong. 
+
+Sensors:
+In the beginning of the season, we didn’t have any sensors on our robot. After our first meet, we realized that having sensors would be crucial for accuracy and other simple mechanisms such as our ball kicker in the back of the robot. We installed two break beam sensors on each side of the kicker to check if the ball kicker was up or down. This helped us in our strategy because it allowed us to time our shots correctly so that no artifacts would get stuck in the curve where the balls left the robot. We had to iterate it a lot, and at one point, changing the sensor’s code completely ruined the robot. In the end, though, we figured out that our logic in the code was wrong and that we wrote lines in the wrong place. We found out that we also didn’t code the right lines of code, and therefore the sensors were working differently from how we wanted them to. 
