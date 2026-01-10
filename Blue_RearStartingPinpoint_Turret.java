@@ -22,8 +22,8 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Red_RearStartingPinpoint_Turret", group = "Auton")
-public class Red_RearStartingPinpoint extends OpMode {
+@Autonomous(name = "Blue_RearStartingPinpoint_Turret", group = "Auton")
+public class Blue_RearStartingPinpoint_Turret extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, opmodeTimer;
@@ -49,9 +49,9 @@ public class Red_RearStartingPinpoint extends OpMode {
     private static final double SERVO_MIN_POS = 0.0;
     private static final double SERVO_MAX_POS = 1.0;
 
-    // Rear turret setpoints you asked for
-    private static final double TURRET_INIT_DEG = -78.0;          // during init
-    private static final double TURRET_AFTER_PRELOAD_DEG = -78.0; // after preload scoring
+    // BLUE is mirror of RED -> flip sign
+    private static final double TURRET_INIT_DEG = 85.0;          // during init
+    private static final double TURRET_AFTER_PRELOAD_DEG = 82.0; // after preload scoring
     // ---------------------------------------------------------------
 
     // ---------------- Shooter PIDF ----------------
@@ -67,7 +67,7 @@ public class Red_RearStartingPinpoint extends OpMode {
     double waittime_transfer = 0.3;
 
     // Drive powers
-    double power_pickup = 1.0 ;
+    double power_pickup = 1.0;
     double power_shooting = 1.0;
 
     // Intake powers
@@ -75,7 +75,7 @@ public class Red_RearStartingPinpoint extends OpMode {
     double searchIntakePower = -0.4;   // while searching (beam not broken) during kicker
     double transferIntakePower = -1.0; // once beam is broken during kicker
 
-    // Kicker positions (from your rear code)
+    // Kicker positions
     double ballkicker_up = 0.22;
     double ballkicker_down = 0.5;
 
@@ -91,28 +91,39 @@ public class Red_RearStartingPinpoint extends OpMode {
     private static final double SHOOTER_READY_TOL = 40;        // velocity tolerance (ticks/sec)
     private static final double SHOOTER_READY_TIMEOUT = 2.5;   // seconds to wait before giving up
 
-    // ---------------- Poses (REAR pathing) ----------------
-    // Robot heading stays 0deg (faces blue HP, parallel to wall)
-    private final Pose startPose = new Pose(91, 9, Math.toRadians(0));
+    // =========================================================
+    // BLUE REAR POSES (explicit numbers; mirrored from your RED rear)
+    // Mirror rule you’ve been using:
+    // x_blue = 144 - x_red
+    // y same
+    // heading_blue = 180 - heading_red
+    //
+    // Your RED rear had heading 0deg everywhere -> BLUE becomes 180deg everywhere
+    // Park heading 45deg -> BLUE becomes 135deg
+    // =========================================================
+
+    // Robot heading stays 180deg (mirror of 0deg)
+    private final Pose startPose = new Pose(53, 9, Math.toRadians(180));
 
     // Keep scoring pose(s) at the wall
-    private final Pose scorePose  = new Pose(91, 9, Math.toRadians(0)); // preload score
-    private final Pose scorePose1 = new Pose(91, 9, Math.toRadians(0)); // normal shots
-    private final Pose scorePose2 = new Pose(91, 9, Math.toRadians(0)); // last shots
+    private final Pose scorePose  = new Pose(53, 9, Math.toRadians(180)); // preload score
+    private final Pose scorePose1 = new Pose(53, 9, Math.toRadians(180)); // normal shots
+    private final Pose scorePose2 = new Pose(53, 9, Math.toRadians(180)); // last shots
 
-    private final Pose pickup1Pose_lane1 = new Pose(96, 35, Math.toRadians(0));
-    private final Pose pickup2Pose_lane1 = new Pose(118, 35, Math.toRadians(0));
-    private final Pose pickup3Pose_lane1 = new Pose(134, 35, Math.toRadians(0));
+    // Lanes mirrored (x only)
+    private final Pose pickup1Pose_lane1 = new Pose(48, 35, Math.toRadians(180));
+    private final Pose pickup2Pose_lane1 = new Pose(26, 35, Math.toRadians(180));
+    private final Pose pickup3Pose_lane1 = new Pose(10, 35, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane2 = new Pose(96, 63, Math.toRadians(0));
-    private final Pose pickup2Pose_lane2 = new Pose(118, 63, Math.toRadians(0));
-    private final Pose pickup3Pose_lane2 = new Pose(129, 63, Math.toRadians(0));
+    private final Pose pickup1Pose_lane2 = new Pose(48, 63, Math.toRadians(180));
+    private final Pose pickup2Pose_lane2 = new Pose(26, 63, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(15, 63, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane3 = new Pose(96, 84, Math.toRadians(0));
-    private final Pose pickup2Pose_lane3 = new Pose(118, 84, Math.toRadians(0));
-    private final Pose pickup3Pose_lane3 = new Pose(124, 84, Math.toRadians(0));
+    private final Pose pickup1Pose_lane3 = new Pose(48, 84, Math.toRadians(180));
+    private final Pose pickup2Pose_lane3 = new Pose(26, 84, Math.toRadians(180));
+    private final Pose pickup3Pose_lane3 = new Pose(20, 84, Math.toRadians(180));
 
-    private final Pose parkPose = new Pose(96, 70, Math.toRadians(45));
+    private final Pose parkPose = new Pose(48, 70, Math.toRadians(135));
 
     // ---------------- Paths ----------------
     private Path scorePreload;
@@ -235,10 +246,10 @@ public class Red_RearStartingPinpoint extends OpMode {
     public void buildPaths() {
 
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        // KEEP ROBOT HEADING STATIC (0deg)
-        scorePreload.setConstantHeadingInterpolation(Math.toRadians(0));
+        // KEEP ROBOT HEADING STATIC (180deg)
+        scorePreload.setConstantHeadingInterpolation(Math.toRadians(180));
 
-        double pickupHeading = Math.toRadians(0);
+        double pickupHeading = Math.toRadians(180);
 
         // lane 1 pickups
         grabPickup1_lane1 = follower.pathBuilder()
@@ -258,7 +269,7 @@ public class Red_RearStartingPinpoint extends OpMode {
 
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane1, scorePose1))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         // lane 2 pickups
@@ -279,7 +290,7 @@ public class Red_RearStartingPinpoint extends OpMode {
 
         scorePickup2 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane2, scorePose1))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         // lane 3 pickups
@@ -300,7 +311,7 @@ public class Red_RearStartingPinpoint extends OpMode {
 
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane3, scorePose2))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         park = follower.pathBuilder()
@@ -316,7 +327,7 @@ public class Red_RearStartingPinpoint extends OpMode {
             case 0:
                 follower.setMaxPower(power_shooting);
 
-                // FIX: if preload path is basically zero-length, skip it
+                // If preload path is basically zero-length, skip it
                 if (dist(startPose, scorePose) < 0.5) {
                     setPathState(1);
                 } else {
@@ -329,13 +340,13 @@ public class Red_RearStartingPinpoint extends OpMode {
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
-                    // IMPORTANT: don't shoot until shooter reaches velocity
+                    // Don't shoot until shooter reaches velocity
                     waitForShooterReady(SHOOTER_READY_TOL, SHOOTER_READY_TIMEOUT);
 
                     // preload scoring: ALWAYS 3 cycles
                     doBeamGatedTransfers(SHOT_CYCLES, 1.0);
 
-                    // AFTER PRELOAD: turret stays at -75
+                    // AFTER PRELOAD: turret stays at +78 (mirrored)
                     setTurretDeg(TURRET_AFTER_PRELOAD_DEG);
 
                     // Start lane 1 pickup: intake ON while driving
@@ -523,16 +534,15 @@ public class Red_RearStartingPinpoint extends OpMode {
         beamBreakSensor = hardwareMap.get(DigitalChannel.class, "breakbeam");
         beamBreakSensor.setMode(DigitalChannel.Mode.INPUT);
 
-        // --- CHANGED: do NOT raise kicker in init ---
-        // Keep kicker DOWN in init so it doesn't pop up before start
+        // Do NOT raise kicker in init
         ballStopper.setPosition(ballkicker_down);
 
         hood.setPosition(0.24);
 
-        // default: intake off until we enter lane pickups
+        // intake off until lane pickups
         IntakeMotor.setPower(0.0);
 
-        // INIT: turret -> -75 deg
+        // INIT: turret -> +78 deg (mirrored)
         setTurretDeg(TURRET_INIT_DEG);
 
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
@@ -545,7 +555,7 @@ public class Red_RearStartingPinpoint extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        targetvel = farvelocity; // make it explicit on start
+        targetvel = farvelocity; // explicit on start
         setPathState(0);
     }
 

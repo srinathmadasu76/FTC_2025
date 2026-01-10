@@ -8,14 +8,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class ServoTunerManual extends LinearOpMode {
 
     // Change to your configured servo name
-    private static final String ballKick = "ballKick";
+    private static final String turret = "turret";
 
     // Start value when OpMode begins
     private double pos = 0.50;
 
     // Step sizes
     private static final double FINE_STEP = 0.001;
-    private static final double COARSE_STEP = 0.01;
+    private static final double COARSE_STEP = 0.5;
 
     private static double clamp01(double x) {
         if (x < 0.0) return 0.0;
@@ -25,7 +25,7 @@ public class ServoTunerManual extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        Servo servo = hardwareMap.get(Servo.class, ballKick);
+        Servo servo = hardwareMap.get(Servo.class, turret);
 
         telemetry.addLine("Servo Tuner (Manual) Ready");
         telemetry.addLine("Controls:");
@@ -68,7 +68,7 @@ public class ServoTunerManual extends LinearOpMode {
 
             lastX=x; lastB=b; lastDU=du; lastDD=dd; lastY=y; lastA=a;
 
-            telemetry.addData("Servo", ballKick);
+            telemetry.addData("Servo", turret);
             telemetry.addData("Position (0-1)", "%.5f", pos);
             telemetry.addData("Fine step", FINE_STEP);
             telemetry.addData("Coarse step", COARSE_STEP);
