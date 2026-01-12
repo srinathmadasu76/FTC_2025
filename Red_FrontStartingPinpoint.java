@@ -44,8 +44,8 @@ public class Red_FrontStartingPinpoint extends OpMode {
     private static final double SERVO_MAX_POS = 1.0;
 
     // RED = mirror of BLUE setpoints (flip sign)
-    private static final double TURRET_INIT_DEG = -45.0;              // during init
-    private static final double TURRET_AFTER_PRELOAD_DEG = -45.0;     // after preload scoring
+    private static final double TURRET_INIT_DEG = -49.0;              // during init
+    private static final double TURRET_AFTER_PRELOAD_DEG = -53.0;     // after preload scoring
     // ---------------------------------------------------------------
 
     DcMotor ShooterMotor = null;
@@ -84,7 +84,7 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
     // Shooter velocities
     double farvelocity = 1550;
-    double nearvelocity = 1300;
+    double nearvelocity = 1230;
     double targetvel = nearvelocity;
 
     // always do 3 cycles every scoring event
@@ -102,7 +102,7 @@ public class Red_FrontStartingPinpoint extends OpMode {
     private final Pose startPose = new Pose(119, 130, Math.toRadians(305));
 
     private final Pose scorePose  = new Pose(91, 93, Math.toRadians(0)); // preload score
-    private final Pose scorePose1 = new Pose(91, 93, Math.toRadians(0)); // normal shots
+    private final Pose scorePose1 = new Pose(91, 98, Math.toRadians(0)); // normal shots
     private final Pose scorePose2 = new Pose(91, 93, Math.toRadians(0)); // last shots
 
     private final Pose Park = new Pose(112, 96, Math.toRadians(40));
@@ -112,19 +112,24 @@ public class Red_FrontStartingPinpoint extends OpMode {
     private final Pose pickup3Pose_lane1 = new Pose(124, 93, Math.toRadians(0));
 
     private final Pose pickup1Pose_lane2 = new Pose(96, 68, Math.toRadians(0));
-    private final Pose pickup2Pose_lane2 = new Pose(118, 68, Math.toRadians(0));
+    private final Pose pickup2Pose_lane2 = new Pose(124, 68, Math.toRadians(0));
     private final Pose pickup3Pose_lane2 = new Pose(129, 68, Math.toRadians(0));
 
     private final Pose pickup1Pose_lane3 = new Pose(96, 47, Math.toRadians(0));
-    private final Pose pickup2Pose_lane3 = new Pose(118, 47, Math.toRadians(0));
+    private final Pose pickup2Pose_lane3 = new Pose(124, 47, Math.toRadians(0));
     private final Pose pickup3Pose_lane3 = new Pose(129, 47, Math.toRadians(0));
 
+    // --------- FIXED NAMES: Gate Open POSES (no longer collide with PathChains) ---------
+    private final Pose gateOpenPose1 = new Pose(118, 90, Math.toRadians(0));
+    private final Pose gateOpenPose2 = new Pose(124, 84, Math.toRadians(0));
+
     private Path scorePreload;
+
 
     private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1,
             grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, scorePickup2,
             grabPickup1_lane3, grabPickup2_lane3, grabPickup3_lane3, scorePickup3,
-            park;
+            park, gateOpenPath1, gateOpenPath2;
 
     // ------------------- Intake helpers -------------------
     private void startLaneIntake() { IntakeMotor.setPower(pickupIntakePower); }
@@ -229,9 +234,31 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 .setConstantHeadingInterpolation(pickupHeading)
                 .build();
 
+        // -------- Gate Open Paths (NOW THEY COMPILE + ACTUALLY RUN) --------
+        // After you reach pickup3 lane1, you’ll go to gateOpenPose1 then gateOpenPose2, then back to scoring.
+        gateOpenPath1 = follower.pathBuilder()
+                .addPath(new BezierLine(pickup3Pose_lane1, gateOpenPose1))
+                .setConstantHeadingInterpolation(pickupHeading)
+                .build();
+
+        gateOpenPath2 = follower.pathBuilder()
+                .addPath(new BezierLine(gateOpenPose1, gateOpenPose2))
+                .setConstantHeadingInterpolation(pickupHeading)
+                .build();
+
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane1, scorePose1))
                 .setLinearHeadingInterpolation(pickup3Pose_lane1.getHeading(), scorePose1.getHeading())
+                .build();
+
+        grabPickup2_lane1 = follower.pathBuilder()
+                .addPath(new BezierLine(pickup1Pose_lane1, pickup2Pose_lane1))
+                .setConstantHeadingInterpolation(pickupHeading)
+                .build();
+
+        grabPickup3_lane1 = follower.pathBuilder()
+                .addPath(new BezierLine(pickup2Pose_lane1, pickup3Pose_lane1))
+                .setConstantHeadingInterpolation(pickupHeading)
                 .build();
 
         // lane 2 pickups
@@ -325,8 +352,24 @@ public class Red_FrontStartingPinpoint extends OpMode {
                 }
                 opmodeTimer.resetTimer();
                 break;
-
+            // -------- INSERTED: Gate Open 1/2 sequence (states shifted) --------
             case 4:
+                if (!follower.isBusy()) {
+                    // optional: stop intake if you only want it during lane drive
+                    stopLaneIntake();
+
+                    follower.followPath(gateOpenPath1, true);
+                    setPathState(5);
+                }
+                break;
+
+            case 5:
+                if (!follower.isBusy()) {
+                    follower.followPath(gateOpenPath2, true);
+                    setPathState(6);
+                }
+                break;
+            case 6:
                 follower.setMaxPower(power_pickup_1stand3rd);
                 if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
 
@@ -334,11 +377,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_shooting);
                     follower.followPath(scorePickup1, true);
-                    setPathState(5);
+                    setPathState(7);
                 }
                 break;
 
-            case 5:
+            case 7:
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
@@ -348,26 +391,26 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_pickup_2nd);
                     follower.followPath(grabPickup1_lane2, true);
-                    setPathState(6);
+                    setPathState(8);
                 }
                 break;
 
-            case 6:
+            case 8:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2_lane2, true);
-                    setPathState(7);
+                    setPathState(9);
                 }
                 break;
 
-            case 7:
+            case 9:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3_lane2, true);
-                    setPathState(8);
+                    setPathState(10);
                 }
                 opmodeTimer.resetTimer();
                 break;
 
-            case 8:
+            case 10:
                 follower.setMaxPower(power_pickup_2nd);
                 if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
 
@@ -375,11 +418,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_shooting);
                     follower.followPath(scorePickup2, true);
-                    setPathState(9);
+                    setPathState(11);
                 }
                 break;
 
-            case 9:
+            case 11:
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
@@ -389,26 +432,26 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_pickup_1stand3rd);
                     follower.followPath(grabPickup1_lane3, true);
-                    setPathState(10);
+                    setPathState(12);
                 }
                 break;
 
-            case 10:
+            case 12:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2_lane3, true);
-                    setPathState(11);
+                    setPathState(13);
                 }
                 break;
 
-            case 11:
+            case 13:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3_lane3, true);
-                    setPathState(12);
+                    setPathState(14);
                 }
                 opmodeTimer.resetTimer();
                 break;
 
-            case 12:
+            case 14:
                 follower.setMaxPower(power_pickup_1stand3rd);
                 targetvel = nearvelocity;
 
@@ -418,11 +461,11 @@ public class Red_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_shooting);
                     follower.followPath(scorePickup3, true);
-                    setPathState(13);
+                    setPathState(15);
                 }
                 break;
 
-            case 13:
+            case 15:
                 follower.setMaxPower(power_shooting);
                 targetvel = nearvelocity;
 

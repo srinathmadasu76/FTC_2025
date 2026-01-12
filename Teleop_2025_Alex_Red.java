@@ -17,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@TeleOp(name = "teleop_blue")
-public class Teleop_2025_Alex_Red  extends LinearOpMode {
+@TeleOp(name = "teleop_Red")
+public class Teleop_2025_Alex_Red extends LinearOpMode {
 
     // ---------------- Hardware ----------------
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -42,7 +42,7 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
     private final double pSwitch = 50;
 
     private final double farVelocity = 1650;
-    private final double nearVelocity = 1400;
+    private final double nearVelocity = 1300;
 
     private boolean shooterEnabled = false;
 
@@ -68,7 +68,7 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
     private static final String TURRET_SERVO_NAME = "turret";
 
     // Field target direction (BLUE)
-    private static double BLUE_TARGET_DEG = -103;
+    private static double BLUE_TARGET_DEG = 110;
 
     // Turret limits (deg)
     private static final double TURRET_MIN_DEG = -105.0;
@@ -90,6 +90,15 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
 
     // Runtime re-zero button state (Y)
     private boolean prevY = false;
+
+    // =====================================================================
+    //                 MANUAL OVERRIDE (DPAD RIGHT -> 80deg)
+    //                 Velocity change -> resume tracking
+    // =====================================================================
+    private boolean turretManualOverride = false;
+    private double turretManualDeg = -82.0;
+    private double overrideVelocityLatch = 0.0;   // velocity at time override was set
+    private boolean prevDpadRight = false;
 
     @Override
     public void runOpMode() {
@@ -143,6 +152,7 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
         turret.setPosition(Range.clip(TURRET_CENTER_POS, SERVO_MIN_POS, SERVO_MAX_POS));
 
         telemetry.addLine("teleop_blue: Pinpoint-only turret");
+        telemetry.addLine("DPAD_RIGHT: turret -> 80deg (manual). Change velocity preset -> tracking resumes.");
         telemetry.addLine("Press Y during TELEOP to reset Pinpoint and face goal");
         telemetry.addData("BLUE_TARGET_DEG", BLUE_TARGET_DEG);
         telemetry.addData("TURRET_TRIM_DEG", TURRET_TRIM_DEG);
@@ -203,18 +213,40 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
             // =================================================================
             //                     HOOD PRESETS + SHOOTER ENABLE
             // =================================================================
+
+            // Rising-edge detect for DPAD_RIGHT (so we only latch override once per press)
+            boolean dpadRight = gamepad1.dpad_right;
+            boolean dpadRightPressed = dpadRight && !prevDpadRight;
+            prevDpadRight = dpadRight;
+
             if (gamepad1.dpad_left) {
                 hood.setPosition(0.24);
                 targetVelocity = nearVelocity;
                 shooterEnabled = true;
+                // When you switch velocity (near vs far), tracking should resume automatically (handled below).
             }
-            if (gamepad1.dpad_right) {
+
+            if (dpadRightPressed) {
                 hood.setPosition(0.24);
                 targetVelocity = farVelocity;
                 shooterEnabled = true;
+
+                // Manual override: turret -> 80deg
+                turretManualOverride = true;
+                overrideVelocityLatch = targetVelocity; // remember velocity when override was activated
+
+                double manualCmd = Range.clip(turretManualDeg, TURRET_MIN_DEG, TURRET_MAX_DEG);
+                turret.setPosition(turretDegToServoPos(manualCmd));
             }
+
             if (gamepad1.dpad_down) {
                 shooterEnabled = false;
+            }
+
+            // If the selected target velocity changes away from the one that activated override,
+            // auto-tracking is allowed again.
+            if (turretManualOverride && targetVelocity != overrideVelocityLatch) {
+                turretManualOverride = false;
             }
 
             // =================================================================
@@ -257,13 +289,19 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
 
             // =================================================================
             //                     TURRET TRACKING (PINPOINT)
+            //   If manual override is active, HOLD 80deg instead of tracking.
             // =================================================================
             double headingDeg = getHeadingDeg();
-            double turretDeg =
-                    (BLUE_TARGET_DEG - headingDeg) * TURRET_DIR + TURRET_TRIM_DEG;
 
-            turretDeg = Range.clip(turretDeg, TURRET_MIN_DEG, TURRET_MAX_DEG);
-            turret.setPosition(turretDegToServoPos(turretDeg));
+            double turretDegCmd;
+            if (turretManualOverride) {
+                turretDegCmd = Range.clip(turretManualDeg, TURRET_MIN_DEG, TURRET_MAX_DEG);
+            } else {
+                turretDegCmd = (BLUE_TARGET_DEG - headingDeg) * TURRET_DIR + TURRET_TRIM_DEG;
+                turretDegCmd = Range.clip(turretDegCmd, TURRET_MIN_DEG, TURRET_MAX_DEG);
+            }
+
+            turret.setPosition(turretDegToServoPos(turretDegCmd));
 
             // =================================================================
             //                       SHOOTER VELOCITY HOLD
@@ -292,8 +330,9 @@ public class Teleop_2025_Alex_Red  extends LinearOpMode {
             telemetry.addData("Y Pressed (re-zero)", yPressed);
 
             telemetry.addData("PP heading(deg)", headingDeg);
-            telemetry.addData("TurretDegCmd", turretDeg);
-            telemetry.addData("TurretPosCmd", turretDegToServoPos(turretDeg));
+            telemetry.addData("TurretManualOverride", turretManualOverride);
+            telemetry.addData("TurretDegCmd", turretDegCmd);
+            telemetry.addData("TurretPosCmd", turretDegToServoPos(turretDegCmd));
 
             telemetry.addData("IntakeArmed", intakeArmed);
             telemetry.addData("BeamBroken", beamBroken);

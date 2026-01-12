@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode; // make sure this aligns with class location
 
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -22,17 +22,16 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue Front Auto", group = "Auton")
-public class Blue_FrontStartingPinpoint extends OpMode {
+@Autonomous(name = "Blue_Front15point", group = "Auton")
+public class Blue_Front15point extends OpMode {
 
-    // ---------------- Pedro ----------------
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
+
     private int pathState;
 
-    // ---------------- Hardware ----------------
-    private Servo ballStopper = null;
-    private Servo hood = null;
+    Servo ballStopper = null;
+    Servo hood = null;
 
     // ------------------- TURRET (AUTO SETPOINTS) -------------------
     private Servo turret = null;
@@ -49,15 +48,15 @@ public class Blue_FrontStartingPinpoint extends OpMode {
     private static final double TURRET_AFTER_PRELOAD_DEG = 45.0;     // after preload scoring
     // ---------------------------------------------------------------
 
-    private DcMotor ShooterMotor = null;
-    private DcMotor IntakeMotor = null;
+    DcMotor ShooterMotor = null;
+    DcMotor IntakeMotor = null;
 
-    private DcMotor FrontLeft = null;
-    private DcMotor FrontRight = null;
-    private DcMotor BackLeft = null;
-    private DcMotor BackRight = null;
+    DcMotor FrontLeft = null;
+    DcMotor FrontRight = null;
+    DcMotor BackLeft = null;
+    DcMotor BackRight = null;
 
-    private DigitalChannel beamBreakSensor = null;
+    DigitalChannel beamBreakSensor = null;
 
     private PIDFController b, s;
 
@@ -66,7 +65,7 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
     double pSwitch = 50;
 
-    double waittime = 0.2;
+    double waittime = 0.17;
     double waittime_transfer = 0.25;
 
     // Lane pickup powers (drive power)
@@ -85,55 +84,46 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
     // Shooter velocities
     double farvelocity = 1550;
-    double nearvelocity = 1230;
+    double nearvelocity = 1300;
     double targetvel = nearvelocity;
 
     // always do 3 cycles every scoring event
     private static final int SHOT_CYCLES = 3;
 
     // =========================================================
-    // UPDATED START + SCORING POSES
+    // UPDATED START + SCORING POSES (per your message)
     // Start: (25,130) heading 235°
-    // Scoring: (54,90) heading 180°  (your code uses 54,90)
+    // All scoring poses after this: (50,85) heading 180°
     // =========================================================
     private final Pose startPose = new Pose(25, 130, Math.toRadians(235));
 
     private final Pose scorePose  = new Pose(54, 90, Math.toRadians(180)); // preload score
     private final Pose scorePose1 = new Pose(54, 90, Math.toRadians(180)); // normal shots
     private final Pose scorePose2 = new Pose(54, 90, Math.toRadians(180)); // last shots
-
-    // Park
+    // Park is NOT a scoring pose; leaving as-is unless you tell me new park target
     private final Pose Park = new Pose(32, 96, Math.toRadians(140));
 
-    // Lane 1
     private final Pose pickup1Pose_lane1 = new Pose(48, 90, Math.toRadians(180));
     private final Pose pickup2Pose_lane1 = new Pose(23, 90, Math.toRadians(180));
     private final Pose pickup3Pose_lane1 = new Pose(20, 90, Math.toRadians(180));
 
-    // --------- FIXED NAMES: Gate Open POSES (no longer collide with PathChains) ---------
-    private final Pose gateOpenPose1 = new Pose(23, 90, Math.toRadians(180));
-    private final Pose gateOpenPose2 = new Pose(20, 84, Math.toRadians(180));
-    // ----------------------------------------------------------------------------------
-
-    // Lane 2
     private final Pose pickup1Pose_lane2 = new Pose(48, 65, Math.toRadians(180));
-    private final Pose pickup2Pose_lane2 = new Pose(19, 65, Math.toRadians(180));
-    private final Pose pickup3Pose_lane2 = new Pose(18, 65, Math.toRadians(180));
+    private final Pose pickup2Pose_lane2 = new Pose(26, 65, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(24, 65, Math.toRadians(180));
 
-    // Lane 3
     private final Pose pickup1Pose_lane3 = new Pose(48, 44, Math.toRadians(180));
     private final Pose pickup2Pose_lane3 = new Pose(19, 44, Math.toRadians(180));
-    private final Pose pickup3Pose_lane3 = new Pose(15, 44, Math.toRadians(180));
+    private final Pose pickup3Pose_lane3 = new Pose(15 , 44, Math.toRadians(180));
 
-    // ---------------- Paths ----------------
+    private final Pose pickupPose_slider = new Pose(10, 63, Math.toRadians(140));
+    private final Pose pushPose_slider = new Pose(13, 65, Math.toRadians(135));
+
     private Path scorePreload;
 
-    private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1,
-            gateOpenPath1, gateOpenPath2, scorePickup1,
-
-    grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, scorePickup2,
+    private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1,
+            grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, scorePickup2,
             grabPickup1_lane3, grabPickup2_lane3, grabPickup3_lane3, scorePickup3,
-            park;
+            park,grabPickup_slider,scorePickupslider,push_slider;
 
     // ------------------- Intake helpers -------------------
     private void startLaneIntake() { IntakeMotor.setPower(pickupIntakePower); }
@@ -160,13 +150,9 @@ public class Blue_FrontStartingPinpoint extends OpMode {
     }
 
     private void updateShooterPID() {
-        if (ShooterMotor == null) return;
-
         double currentvel = ((DcMotorEx) ShooterMotor).getVelocity();
-
         b.setCoefficients(new PIDFCoefficients(bp, 0, bd, bf));
         s.setCoefficients(new PIDFCoefficients(sp, 0, sd, sf));
-
         if (Math.abs(targetvel - currentvel) < pSwitch) {
             s.updateError(targetvel - currentvel);
             ShooterMotor.setPower(s.run());
@@ -220,7 +206,7 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
     public void buildPaths() {
 
-        // startPose -> scorePose
+        // UPDATED: startPose -> scorePose (new scoring point)
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
@@ -243,26 +229,13 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                 .setConstantHeadingInterpolation(pickupHeading)
                 .build();
 
-        // -------- Gate Open Paths (NOW THEY COMPILE + ACTUALLY RUN) --------
-        // After you reach pickup3 lane1, you’ll go to gateOpenPose1 then gateOpenPose2, then back to scoring.
-        gateOpenPath1 = follower.pathBuilder()
-                .addPath(new BezierLine(pickup3Pose_lane1, gateOpenPose1))
-                .setConstantHeadingInterpolation(pickupHeading)
-                .build();
-
-        gateOpenPath2 = follower.pathBuilder()
-                .addPath(new BezierLine(gateOpenPose1, gateOpenPose2))
-                .setConstantHeadingInterpolation(pickupHeading)
-                .build();
-
-        // score after gate open
+        // UPDATED: scoring pose is now scorePose1 (50,85,180)
         scorePickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(gateOpenPose2, scorePose1))
-                .setLinearHeadingInterpolation(gateOpenPose2.getHeading(), scorePose1.getHeading())
+                .addPath(new BezierLine(pickup3Pose_lane1, scorePose1))
+                .setLinearHeadingInterpolation(pickup3Pose_lane1.getHeading(), scorePose1.getHeading())
                 .build();
-        // ------------------------------------------------------------------
 
-        // lane 2 pickups (start from scorePose1)
+        // lane 2 pickups (start from scorePose1 which is same scoring point now)
         grabPickup1_lane2 = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose1, pickup1Pose_lane2))
                 .setConstantHeadingInterpolation(pickupHeading)
@@ -299,6 +272,7 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                 .setConstantHeadingInterpolation(pickupHeading)
                 .build();
 
+        // UPDATED: last scoring pose is scorePose2 (same scoring point now)
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane3, scorePose2))
                 .setLinearHeadingInterpolation(pickup3Pose_lane3.getHeading(), scorePose2.getHeading())
@@ -307,6 +281,19 @@ public class Blue_FrontStartingPinpoint extends OpMode {
         park = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose2, Park))
                 .setLinearHeadingInterpolation(scorePose2.getHeading(), Park.getHeading())
+                .build();
+
+        push_slider= follower.pathBuilder()
+                .addPath(new BezierLine(scorePose2, pushPose_slider))
+                .setLinearHeadingInterpolation(scorePose2.getHeading(),pushPose_slider.getHeading())
+                .build();
+        grabPickup_slider= follower.pathBuilder()
+                .addPath(new BezierLine( pushPose_slider, pickupPose_slider))
+                .setLinearHeadingInterpolation( pushPose_slider.getHeading(), pickupPose_slider.getHeading())
+                .build();
+        scorePickupslider = follower.pathBuilder()
+                .addPath(new BezierLine(pickupPose_slider,scorePose2))
+                .setLinearHeadingInterpolation(pickupPose_slider.getHeading(), scorePose2.getHeading())
                 .build();
     }
 
@@ -335,7 +322,7 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_pickup_1stand3rd);
                     follower.followPath(grabPickup1_lane1, true);
-                    setPathState(2);
+                    setPathState(3);
                 }
                 break;
 
@@ -354,35 +341,19 @@ public class Blue_FrontStartingPinpoint extends OpMode {
                 opmodeTimer.resetTimer();
                 break;
 
-            // -------- INSERTED: Gate Open 1/2 sequence (states shifted) --------
             case 4:
-                if (!follower.isBusy()) {
-                    // optional: stop intake if you only want it during lane drive
+                follower.setMaxPower(power_pickup_1stand3rd);
+                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
+
                     stopLaneIntake();
 
-                    follower.followPath(gateOpenPath1, true);
+                    follower.setMaxPower(power_shooting);
+                    follower.followPath(scorePickup1, true);
                     setPathState(5);
                 }
                 break;
 
             case 5:
-                if (!follower.isBusy()) {
-                    follower.followPath(gateOpenPath2, true);
-                    setPathState(6);
-                }
-                break;
-
-            case 6:
-                follower.setMaxPower(power_pickup_1stand3rd);
-                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
-                    follower.setMaxPower(power_shooting);
-                    follower.followPath(scorePickup1, true);
-                    setPathState(7);
-                }
-                break;
-            // ------------------------------------------------------------------
-
-            case 7:
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
@@ -392,26 +363,26 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_pickup_2nd);
                     follower.followPath(grabPickup1_lane2, true);
-                    setPathState(8);
+                    setPathState(7);
                 }
                 break;
 
-            case 8:
+            case 6:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2_lane2, true);
-                    setPathState(9);
+                    setPathState(7);
                 }
                 break;
 
-            case 9:
+            case 7:
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3_lane2, true);
-                    setPathState(10);
+                    setPathState(8);
                 }
                 opmodeTimer.resetTimer();
                 break;
 
-            case 10:
+            case 8:
                 follower.setMaxPower(power_pickup_2nd);
                 if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
 
@@ -419,11 +390,45 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_shooting);
                     follower.followPath(scorePickup2, true);
-                    setPathState(11);
+                    setPathState(9);
                 }
                 break;
 
+            case 9:
+                follower.setMaxPower(power_shooting);
+
+                if (!follower.isBusy()) {
+                    doBeamGatedTransfers(SHOT_CYCLES, 1.0);
+
+                    startLaneIntake();
+
+                    follower.setMaxPower(power_pickup_1stand3rd);
+                    follower.followPath(push_slider, true);
+                    setPathState(10);
+                }
+                break;
+            case 10:
+                if (!follower.isBusy()) {
+                    follower.followPath(grabPickup_slider, true);
+                    setPathState(11);
+                }
+                opmodeTimer.resetTimer();
+                break;
             case 11:
+                follower.setMaxPower(power_pickup_1stand3rd);
+                targetvel = nearvelocity;
+                safeWaitIntakeSeconds(0.5);
+                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 1.5) {
+
+                    //stopLaneIntake();
+
+                    follower.setMaxPower(power_shooting);
+                    follower.followPath(scorePickupslider, true);
+                    setPathState(12);
+                }
+                break;
+
+            case 12:
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
@@ -433,26 +438,26 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_pickup_1stand3rd);
                     follower.followPath(grabPickup1_lane3, true);
-                    setPathState(12);
-                }
-                break;
-
-            case 12:
-                if (!follower.isBusy()) {
-                    follower.followPath(grabPickup2_lane3, true);
-                    setPathState(13);
+                    setPathState(14);
                 }
                 break;
 
             case 13:
                 if (!follower.isBusy()) {
-                    follower.followPath(grabPickup3_lane3, true);
+                    follower.followPath(grabPickup2_lane3, true);
                     setPathState(14);
+                }
+                break;
+
+            case 14:
+                if (!follower.isBusy()) {
+                    follower.followPath(grabPickup3_lane3, true);
+                    setPathState(15);
                 }
                 opmodeTimer.resetTimer();
                 break;
 
-            case 14:
+            case 15:
                 follower.setMaxPower(power_pickup_1stand3rd);
                 targetvel = nearvelocity;
 
@@ -462,11 +467,11 @@ public class Blue_FrontStartingPinpoint extends OpMode {
 
                     follower.setMaxPower(power_shooting);
                     follower.followPath(scorePickup3, true);
-                    setPathState(15);
+                    setPathState(16);
                 }
                 break;
 
-            case 15:
+            case 16:
                 follower.setMaxPower(power_shooting);
                 targetvel = nearvelocity;
 
@@ -493,6 +498,15 @@ public class Blue_FrontStartingPinpoint extends OpMode {
         }
     }
 
+    public void safeWaitIntakeSeconds(double time) {
+        ElapsedTime timer = new ElapsedTime(SECONDS);
+        timer.reset();
+        while (timer.time() < time) {
+            updateShooterPID();
+            IntakeMotor.setPower(pickupIntakePower);
+        }
+    }
+
     @Override
     public void loop() {
         updateShooterPID();
@@ -510,10 +524,7 @@ public class Blue_FrontStartingPinpoint extends OpMode {
         telemetry.addData("shotCycles", SHOT_CYCLES);
 
         telemetry.addData("startPose", "25,130 @235deg");
-        telemetry.addData("scorePose", "54,90 @180deg");
-
-        telemetry.addData("gateOpenPose1", "23,90 @180deg");
-        telemetry.addData("gateOpenPose2", "20,84 @180deg");
+        telemetry.addData("scorePose", "50,85 @180deg");
 
         telemetry.update();
     }
@@ -521,7 +532,6 @@ public class Blue_FrontStartingPinpoint extends OpMode {
     @Override
     public void init() {
         pathTimer = new Timer();
-        actionTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
@@ -532,7 +542,6 @@ public class Blue_FrontStartingPinpoint extends OpMode {
         ballStopper = hardwareMap.get(Servo.class, "ballKick");
         IntakeMotor = hardwareMap.dcMotor.get("intake");
         IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         ShooterMotor = hardwareMap.dcMotor.get("shooter");
         hood = hardwareMap.get(Servo.class, "hood");
 
@@ -553,7 +562,7 @@ public class Blue_FrontStartingPinpoint extends OpMode {
         // default: intake off until we enter lane pickups
         IntakeMotor.setPower(0.0);
 
-        // INIT: turret -> 45 deg
+        // INIT: turret -> 90 deg
         setTurretDeg(TURRET_INIT_DEG);
 
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
@@ -574,3 +583,4 @@ public class Blue_FrontStartingPinpoint extends OpMode {
         super.stop();
     }
 }
+
