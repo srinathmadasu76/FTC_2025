@@ -85,7 +85,7 @@ public class Teleop_2025_Alex extends LinearOpMode {
     private static double TURRET_TRIM_DEG = -44.5;
 
     // Direct mapping calibration
-    private static double TURRET_CENTER_POS = 0.50;
+    private static double TURRET_CENTER_POS = 0.4800 ;
     private static double TURRET_DEG_PER_POS = 355.0;
 
     // Runtime re-zero button state (Y)
@@ -96,7 +96,7 @@ public class Teleop_2025_Alex extends LinearOpMode {
     //                 Velocity change -> resume tracking
     // =====================================================================
     private boolean turretManualOverride = false;
-    private double turretManualDeg = 82.0;
+    private double turretManualDeg = 76.0;
     private double overrideVelocityLatch = 0.0;   // velocity at time override was set
     private boolean prevDpadRight = false;
 

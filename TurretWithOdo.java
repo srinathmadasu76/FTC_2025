@@ -21,9 +21,9 @@ public class TurretWithOdo extends LinearOpMode {
 
     // ---------------- Field targets (match TeleOp) ----------------
     private static double BLUE_TARGET_DEG = 0.0;
-    private static double RED_TARGET_DEG  = -120.0;
+    private static double RED_TARGET_DEG  = -100.0;
 
-    // ---------------- Turret limits (YOU WANTED ±90°) ----------------
+    // ---------------- Turret limits ----------------
     private static final double TURRET_MIN_DEG = -105.0;
     private static final double TURRET_MAX_DEG =  105.0;
 
@@ -32,10 +32,10 @@ public class TurretWithOdo extends LinearOpMode {
     private static final double SERVO_MAX_POS = 1.0;
 
     // ---------------- Tunables (COPY INTO TELEOP) ----------------
-    private static int TURRET_DIR = +1;
-    private static double TURRET_TRIM_DEG = 52.5;
+    private static int TURRET_DIR = -1;
+    private static double TURRET_TRIM_DEG = -52.5;
 
-    private static double TURRET_CENTER_POS = 0.50;
+    private static double TURRET_CENTER_POS = 0.4800;
     private static double TURRET_DEG_PER_POS = 355.0;
 
     // ---------------- Tuning steps ----------------
@@ -49,6 +49,9 @@ public class TurretWithOdo extends LinearOpMode {
     private boolean lastB, lastY, lastX, lastA, lastRB;
     private boolean lastLB;
 
+    // (optional) for telemetry turn-rate feel
+    private double lastHeadingDeg = 0.0;
+
     @Override
     public void runOpMode() {
 
@@ -59,7 +62,7 @@ public class TurretWithOdo extends LinearOpMode {
         turret.setPosition(Range.clip(TURRET_CENTER_POS, SERVO_MIN_POS, SERVO_MAX_POS));
 
         telemetry.addLine("TURRET TUNER (matches TeleOp turret math)");
-        telemetry.addLine("LIMITED TO ±90 DEG");
+        telemetry.addLine("LIMITED TO ±105 DEG");
         telemetry.addLine("B=Blue | Y=Red | X=Flip DIR | A=Rezero");
         telemetry.addLine("RB=Rezero + FACE GOAL");
         telemetry.addLine("DPAD L/R = Trim | DPAD U/D = DegPerPos");
@@ -75,6 +78,17 @@ public class TurretWithOdo extends LinearOpMode {
         double holdPos = Range.clip(TURRET_CENTER_POS, SERVO_MIN_POS, SERVO_MAX_POS);
 
         while (opModeIsActive()) {
+
+            // =======================
+            //  Update odo ONCE / LOOP
+            // =======================
+            odo.update();
+            Pose2D pose = odo.getPosition();
+            double headingDeg = pose.getHeading(AngleUnit.DEGREES);
+
+            // simple turn-rate estimate (deg/loop) for debugging
+            double headingDeltaDeg = AngleUnit.normalizeDegrees(headingDeg - lastHeadingDeg);
+            lastHeadingDeg = headingDeg;
 
             boolean b  = gamepad1.b;
             boolean y  = gamepad1.y;
@@ -103,6 +117,10 @@ public class TurretWithOdo extends LinearOpMode {
             if (aPressed) {
                 odo.resetPosAndIMU();
                 odo.update();
+                // after rezero, also refresh cached heading immediately
+                Pose2D p2 = odo.getPosition();
+                headingDeg = p2.getHeading(AngleUnit.DEGREES);
+                lastHeadingDeg = headingDeg;
             }
 
             // Rezero + face goal (like your TeleOp Y behavior)
@@ -110,15 +128,23 @@ public class TurretWithOdo extends LinearOpMode {
                 odo.resetPosAndIMU();
                 odo.update();
 
+                // assume heading ~0 after reset, but normalize anyway
                 double targetFieldDeg = isBlue ? BLUE_TARGET_DEG : RED_TARGET_DEG;
+                double errorDeg = AngleUnit.normalizeDegrees(targetFieldDeg - 0.0);
 
                 double turretDegFaceGoal =
-                        (targetFieldDeg - 0.0) * TURRET_DIR + TURRET_TRIM_DEG;
+                        (errorDeg) * TURRET_DIR + TURRET_TRIM_DEG;
 
                 turretDegFaceGoal = Range.clip(turretDegFaceGoal, TURRET_MIN_DEG, TURRET_MAX_DEG);
 
                 holdPos = turretDegToServoPos(turretDegFaceGoal);
                 turret.setPosition(holdPos);
+
+                // refresh cached heading after reset
+                Pose2D p2 = odo.getPosition();
+                headingDeg = p2.getHeading(AngleUnit.DEGREES);
+                lastHeadingDeg = headingDeg;
+                headingDeltaDeg = 0.0;
             }
 
             // Live tuning
@@ -137,16 +163,20 @@ public class TurretWithOdo extends LinearOpMode {
             if (lb && !lastLB) holdPos = turret.getPosition();
             lastLB = lb;
 
+            // =========================
+            //   Tracking / Hold output
+            // =========================
+            double targetFieldDeg = isBlue ? BLUE_TARGET_DEG : RED_TARGET_DEG;
+
             if (lb) {
                 turret.setPosition(holdPos);
             } else {
-                double headingDeg = getHeadingDeg();
-                double targetFieldDeg = isBlue ? BLUE_TARGET_DEG : RED_TARGET_DEG;
+                // NORMALIZED angle error (prevents wrap weirdness + keeps symmetry)
+                double errorDeg = AngleUnit.normalizeDegrees(targetFieldDeg - headingDeg);
 
                 double desiredTurretDegRaw =
-                        (targetFieldDeg - headingDeg) * TURRET_DIR + TURRET_TRIM_DEG;
+                        (errorDeg) * TURRET_DIR + TURRET_TRIM_DEG;
 
-                // HARD LIMIT: ±90°
                 double desiredTurretDeg =
                         Range.clip(desiredTurretDegRaw, TURRET_MIN_DEG, TURRET_MAX_DEG);
 
@@ -155,9 +185,13 @@ public class TurretWithOdo extends LinearOpMode {
                 holdPos = servoPos;
             }
 
+            // =========================
+            //        Telemetry
+            // =========================
             telemetry.addData("Alliance", isBlue ? "BLUE" : "RED");
-            telemetry.addData("TargetFieldDeg", isBlue ? BLUE_TARGET_DEG : RED_TARGET_DEG);
-            telemetry.addData("Heading(deg)", getHeadingDeg());
+            telemetry.addData("TargetFieldDeg", targetFieldDeg);
+            telemetry.addData("Heading(deg)", headingDeg);
+            telemetry.addData("Heading d(deg/loop)", headingDeltaDeg);
 
             telemetry.addData("DIR", TURRET_DIR);
             telemetry.addData("Trim(deg)", TURRET_TRIM_DEG);
@@ -176,12 +210,6 @@ public class TurretWithOdo extends LinearOpMode {
             telemetry.addLine("ALSO SET TELEOP LIMITS: TURRET_MIN_DEG=-90, TURRET_MAX_DEG=+90");
             telemetry.update();
         }
-    }
-
-    private double getHeadingDeg() {
-        odo.update();
-        Pose2D pose = odo.getPosition();
-        return pose.getHeading(AngleUnit.DEGREES);
     }
 
     private static double turretDegToServoPos(double turretDeg) {

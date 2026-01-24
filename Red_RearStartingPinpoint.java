@@ -50,8 +50,8 @@ public class Red_RearStartingPinpoint extends OpMode {
     private static final double SERVO_MAX_POS = 1.0;
 
     // Rear turret setpoints you asked for
-    private static final double TURRET_INIT_DEG = -78.0;          // during init
-    private static final double TURRET_AFTER_PRELOAD_DEG = -78.0; // after preload scoring
+    private static final double TURRET_INIT_DEG = -87.0;          // during init
+    private static final double TURRET_AFTER_PRELOAD_DEG = -87.0; // after preload scoring
     // ---------------------------------------------------------------
 
     // ---------------- Shooter PIDF ----------------
@@ -80,8 +80,8 @@ public class Red_RearStartingPinpoint extends OpMode {
     double ballkicker_down = 0.5;
 
     // Shooter velocities
-    double farvelocity = 1750;
-    double nearvelocity = 1750;
+    double farvelocity = 1650;
+    double nearvelocity = 1650;
     double targetvel = farvelocity;
 
     // Shoot 3 cycles per scoring event
@@ -93,12 +93,12 @@ public class Red_RearStartingPinpoint extends OpMode {
 
     // ---------------- Poses (REAR pathing) ----------------
     // Robot heading stays 0deg (faces blue HP, parallel to wall)
-    private final Pose startPose = new Pose(91, 9, Math.toRadians(0));
+    private final Pose startPose = new Pose(88, 9, Math.toRadians(0));
 
     // Keep scoring pose(s) at the wall
-    private final Pose scorePose  = new Pose(91, 9, Math.toRadians(0)); // preload score
-    private final Pose scorePose1 = new Pose(91, 9, Math.toRadians(0)); // normal shots
-    private final Pose scorePose2 = new Pose(91, 9, Math.toRadians(0)); // last shots
+    private final Pose scorePose  = new Pose(88, 9, Math.toRadians(0)); // preload score
+    private final Pose scorePose1 = new Pose(88, 9, Math.toRadians(0)); // normal shots
+    private final Pose scorePose2 = new Pose(88, 9, Math.toRadians(0)); // last shots
 
     private final Pose pickup1Pose_lane1 = new Pose(96, 35, Math.toRadians(0));
     private final Pose pickup2Pose_lane1 = new Pose(118, 35, Math.toRadians(0));

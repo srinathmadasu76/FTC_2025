@@ -66,7 +66,7 @@ public class Blue_Front15point extends OpMode {
     double pSwitch = 50;
 
     double waittime = 0.17;
-    double waittime_transfer = 0.25;
+    double waittime_transfer = 0.22;
 
     // Lane pickup powers (drive power)
     double power_pickup_2nd = 1.0;       // lane 2
@@ -84,7 +84,7 @@ public class Blue_Front15point extends OpMode {
 
     // Shooter velocities
     double farvelocity = 1550;
-    double nearvelocity = 1300;
+    double nearvelocity = 1200;
     double targetvel = nearvelocity;
 
     // always do 3 cycles every scoring event
@@ -107,23 +107,24 @@ public class Blue_Front15point extends OpMode {
     private final Pose pickup2Pose_lane1 = new Pose(23, 90, Math.toRadians(180));
     private final Pose pickup3Pose_lane1 = new Pose(20, 90, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane2 = new Pose(48, 65, Math.toRadians(180));
-    private final Pose pickup2Pose_lane2 = new Pose(26, 65, Math.toRadians(180));
-    private final Pose pickup3Pose_lane2 = new Pose(24, 65, Math.toRadians(180));
+    private final Pose pickup1Pose_lane2 = new Pose(48, 67, Math.toRadians(180));
+    private final Pose pickup2Pose_lane2 = new Pose(26, 67, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(18, 67, Math.toRadians(180));
 
     private final Pose pickup1Pose_lane3 = new Pose(48, 44, Math.toRadians(180));
     private final Pose pickup2Pose_lane3 = new Pose(19, 44, Math.toRadians(180));
-    private final Pose pickup3Pose_lane3 = new Pose(15 , 44, Math.toRadians(180));
+    private final Pose pickup3Pose_lane3 = new Pose(18, 44, Math.toRadians(180));
 
-    private final Pose pickupPose_slider = new Pose(10, 63, Math.toRadians(140));
-    private final Pose pushPose_slider = new Pose(13, 65, Math.toRadians(135));
+    private final Pose pickupPose_slider = new Pose(12, 50, Math.toRadians(140));
+    private final Pose pushPose_slider = new Pose(13, 67, Math.toRadians(135));
+    private final Pose pickupPose1_slider = new Pose(13, 67, Math.toRadians(90));
 
     private Path scorePreload;
 
     private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1,
             grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, scorePickup2,
             grabPickup1_lane3, grabPickup2_lane3, grabPickup3_lane3, scorePickup3,
-            park,grabPickup_slider,scorePickupslider,push_slider;
+            park,grabPickup_slider,scorePickupslider,push_slider,grabPickup1_slider;
 
     // ------------------- Intake helpers -------------------
     private void startLaneIntake() { IntakeMotor.setPower(pickupIntakePower); }
@@ -291,9 +292,14 @@ public class Blue_Front15point extends OpMode {
                 .addPath(new BezierLine( pushPose_slider, pickupPose_slider))
                 .setLinearHeadingInterpolation( pushPose_slider.getHeading(), pickupPose_slider.getHeading())
                 .build();
+        grabPickup1_slider= follower.pathBuilder()
+                .addPath(new BezierLine( pickupPose_slider, pickupPose1_slider))
+                .setLinearHeadingInterpolation(pickupPose_slider.getHeading(), pickupPose1_slider.getHeading())
+                //.setConstantHeadingInterpolation(Math.toRadians(pickupPose_slider.getHeading()))
+                .build();
         scorePickupslider = follower.pathBuilder()
-                .addPath(new BezierLine(pickupPose_slider,scorePose2))
-                .setLinearHeadingInterpolation(pickupPose_slider.getHeading(), scorePose2.getHeading())
+                .addPath(new BezierLine(pickupPose1_slider,scorePose2))
+                .setLinearHeadingInterpolation(pickupPose1_slider.getHeading(), scorePose2.getHeading())
                 .build();
     }
 
@@ -403,32 +409,41 @@ public class Blue_Front15point extends OpMode {
                     startLaneIntake();
 
                     follower.setMaxPower(power_pickup_1stand3rd);
-                    follower.followPath(push_slider, true);
+                    follower.followPath(grabPickup1_lane3, true);
                     setPathState(10);
                 }
                 break;
             case 10:
                 if (!follower.isBusy()) {
-                    follower.followPath(grabPickup_slider, true);
+
+                    follower.followPath(grabPickup2_lane3, true);
                     setPathState(11);
                 }
                 opmodeTimer.resetTimer();
                 break;
             case 11:
+                if (!follower.isBusy()|| opmodeTimer.getElapsedTimeSeconds() > 1.5) {
+                    //safeWaitIntakeSeconds(0.5);
+                    follower.followPath(grabPickup3_lane3, true);
+                    setPathState(12);
+                }
+                opmodeTimer.resetTimer();
+                break;
+            case 12:
                 follower.setMaxPower(power_pickup_1stand3rd);
                 targetvel = nearvelocity;
-                safeWaitIntakeSeconds(0.5);
+               // safeWaitIntakeSeconds(0.5);
                 if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 1.5) {
 
-                    //stopLaneIntake();
+                    stopLaneIntake();
 
                     follower.setMaxPower(power_shooting);
-                    follower.followPath(scorePickupslider, true);
-                    setPathState(12);
+                    follower.followPath(scorePickup3, true);
+                    setPathState(13);
                 }
                 break;
 
-            case 12:
+            case 13:
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
@@ -437,41 +452,42 @@ public class Blue_Front15point extends OpMode {
                     startLaneIntake();
 
                     follower.setMaxPower(power_pickup_1stand3rd);
-                    follower.followPath(grabPickup1_lane3, true);
-                    setPathState(14);
-                }
-                break;
-
-            case 13:
-                if (!follower.isBusy()) {
-                    follower.followPath(grabPickup2_lane3, true);
+                    follower.followPath(push_slider, true);
                     setPathState(14);
                 }
                 break;
 
             case 14:
                 if (!follower.isBusy()) {
-                    follower.followPath(grabPickup3_lane3, true);
+                    follower.followPath(grabPickup_slider, true);
                     setPathState(15);
+                }
+                break;
+
+            case 15:
+                if (!follower.isBusy()) {
+                    safeWaitIntakeSeconds(0.25);
+                    follower.followPath(grabPickup1_slider, true);
+                    setPathState(16);
                 }
                 opmodeTimer.resetTimer();
                 break;
 
-            case 15:
+            case 16:
                 follower.setMaxPower(power_pickup_1stand3rd);
                 targetvel = nearvelocity;
 
                 if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
 
-                    stopLaneIntake();
+                    //stopLaneIntake();
 
                     follower.setMaxPower(power_shooting);
-                    follower.followPath(scorePickup3, true);
-                    setPathState(16);
+                    follower.followPath(scorePickupslider, true);
+                    setPathState(17);
                 }
                 break;
 
-            case 16:
+            case 17:
                 follower.setMaxPower(power_shooting);
                 targetvel = nearvelocity;
 

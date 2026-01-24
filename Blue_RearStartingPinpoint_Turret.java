@@ -44,14 +44,14 @@ public class Blue_RearStartingPinpoint_Turret extends OpMode {
     private static final String TURRET_SERVO_NAME = "turret";
 
     // Match your TeleOp calibration
-    private static final double TURRET_CENTER_POS = 0.50;
+    private static final double TURRET_CENTER_POS = 0.48;
     private static final double TURRET_DEG_PER_POS = 355.0;
     private static final double SERVO_MIN_POS = 0.0;
     private static final double SERVO_MAX_POS = 1.0;
 
     // BLUE is mirror of RED -> flip sign
-    private static final double TURRET_INIT_DEG = 85.0;          // during init
-    private static final double TURRET_AFTER_PRELOAD_DEG = 82.0; // after preload scoring
+    private static final double TURRET_INIT_DEG = 72.0;          // during init
+    private static final double TURRET_AFTER_PRELOAD_DEG = 72.0; // after preload scoring
     // ---------------------------------------------------------------
 
     // ---------------- Shooter PIDF ----------------
@@ -80,8 +80,8 @@ public class Blue_RearStartingPinpoint_Turret extends OpMode {
     double ballkicker_down = 0.5;
 
     // Shooter velocities
-    double farvelocity = 1750;
-    double nearvelocity = 1750;
+    double farvelocity = 1650;
+    double nearvelocity = 1650;
     double targetvel = farvelocity;
 
     // Shoot 3 cycles per scoring event
@@ -103,12 +103,12 @@ public class Blue_RearStartingPinpoint_Turret extends OpMode {
     // =========================================================
 
     // Robot heading stays 180deg (mirror of 0deg)
-    private final Pose startPose = new Pose(53, 9, Math.toRadians(180));
+    private final Pose startPose = new Pose(58, 9, Math.toRadians(180));
 
     // Keep scoring pose(s) at the wall
-    private final Pose scorePose  = new Pose(53, 9, Math.toRadians(180)); // preload score
-    private final Pose scorePose1 = new Pose(53, 9, Math.toRadians(180)); // normal shots
-    private final Pose scorePose2 = new Pose(53, 9, Math.toRadians(180)); // last shots
+    private final Pose scorePose  = new Pose(58, 9, Math.toRadians(180)); // preload score
+    private final Pose scorePose1 = new Pose(58, 9, Math.toRadians(180)); // normal shots
+    private final Pose scorePose2 = new Pose(58, 9, Math.toRadians(180)); // last shots
 
     // Lanes mirrored (x only)
     private final Pose pickup1Pose_lane1 = new Pose(48, 35, Math.toRadians(180));
