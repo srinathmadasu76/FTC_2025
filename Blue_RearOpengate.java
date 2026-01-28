@@ -23,8 +23,8 @@ import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Red_RearHumanPlayer", group = "Auton")
-public class Red_RearHumanPlayer extends OpMode {
+@Autonomous(name = "Blue_RearOpengate", group = "Auton")
+public class Blue_RearOpengate extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, opmodeTimer;
@@ -45,14 +45,14 @@ public class Red_RearHumanPlayer extends OpMode {
     private static final String TURRET_SERVO_NAME = "turret";
 
     // Match your TeleOp calibration
-    private static final double TURRET_CENTER_POS = 0.50;
+    private static final double TURRET_CENTER_POS = 0.48;
     private static final double TURRET_DEG_PER_POS = 355.0;
     private static final double SERVO_MIN_POS = 0.0;
     private static final double SERVO_MAX_POS = 1.0;
 
-    // Rear turret setpoints you asked for
-    private static final double TURRET_INIT_DEG = -87.0;          // during init
-    private static final double TURRET_AFTER_PRELOAD_DEG = -87.0; // after preload scoring
+    // BLUE is mirror of RED -> flip sign
+    private static final double TURRET_INIT_DEG = 72.0;          // during init
+    private static final double TURRET_AFTER_PRELOAD_DEG = 72.0; // after preload scoring
     // ---------------------------------------------------------------
 
     // ---------------- Shooter PIDF ----------------
@@ -65,10 +65,10 @@ public class Red_RearHumanPlayer extends OpMode {
 
     // Waits / timing
     double waittime = 0.16;
-    double waittime_transfer = 0.2;
+    double waittime_transfer = 0.18;
 
     // Drive powers
-    double power_pickup = 1.0 ;
+    double power_pickup = 1.0;
     double power_shooting = 1.0;
 
     // Intake powers
@@ -76,7 +76,7 @@ public class Red_RearHumanPlayer extends OpMode {
     double searchIntakePower = -0.4;   // while searching (beam not broken) during kicker
     double transferIntakePower = -1.0; // once beam is broken during kicker
 
-    // Kicker positions (from your rear code)
+    // Kicker positions
     double ballkicker_up = 0.22;
     double ballkicker_down = 0.5;
 
@@ -92,28 +92,42 @@ public class Red_RearHumanPlayer extends OpMode {
     private static final double SHOOTER_READY_TOL = 40;        // velocity tolerance (ticks/sec)
     private static final double SHOOTER_READY_TIMEOUT = 2.5;   // seconds to wait before giving up
 
-    // ---------------- Poses (REAR pathing) ----------------
-    // Robot heading stays 0deg (faces blue HP, parallel to wall)
-    private final Pose startPose = new Pose(88, 9, Math.toRadians(0));
+    // =========================================================
+    // BLUE REAR POSES (explicit numbers; mirrored from your RED rear)
+    // Mirror rule you’ve been using:
+    // x_blue = 144 - x_red
+    // y same
+    // heading_blue = 180 - heading_red
+    //
+    // Your RED rear had heading 0deg everywhere -> BLUE becomes 180deg everywhere
+    // Park heading 45deg -> BLUE becomes 135deg
+    // =========================================================
+
+    // Robot heading stays 180deg (mirror of 0deg)
+    private final Pose startPose = new Pose(58, 9, Math.toRadians(180));
 
     // Keep scoring pose(s) at the wall
-    private final Pose scorePose  = new Pose(88, 9, Math.toRadians(0)); // preload score
-    private final Pose scorePose1 = new Pose(88, 9, Math.toRadians(0)); // normal shots
-    private final Pose scorePose2 = new Pose(88, 9, Math.toRadians(0)); // last shots
+    private final Pose scorePose  = new Pose(58, 9, Math.toRadians(180)); // preload score
+    private final Pose scorePose1 = new Pose(58, 9, Math.toRadians(180)); // normal shots
+    private final Pose scorePose2 = new Pose(58, 9, Math.toRadians(180)); // last shots
 
-    private final Pose pickup1Pose_lane1 = new Pose(96, 35, Math.toRadians(0));
-    private final Pose pickup2Pose_lane1 = new Pose(118, 35, Math.toRadians(0));
-    private final Pose pickup3Pose_lane1 = new Pose(134, 35, Math.toRadians(0));
+    // Lanes mirrored (x only)
+    private final Pose pickup1Pose_lane1 = new Pose(48, 35, Math.toRadians(180));
+    private final Pose pickup2Pose_lane1 = new Pose(26, 35, Math.toRadians(180));
+    private final Pose pickup3Pose_lane1 = new Pose(10, 35, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane2 = new Pose(131, 12, Math.toRadians(0));
-    private final Pose pickup2Pose_lane2 = new Pose(118, 63, Math.toRadians(0));
-    private final Pose pickup3Pose_lane2 = new Pose(129, 63, Math.toRadians(0));
+    private final Pose pickup1Pose_lane2 = new Pose(13, 12, Math.toRadians(0));
+    private final Pose pickup2Pose_lane2 = new Pose(26, 63, Math.toRadians(180));
+    private final Pose pickup3Pose_lane2 = new Pose(15, 63, Math.toRadians(180));
 
-    private final Pose pickup1Pose_lane3 = new Pose(131, 12, Math.toRadians(0));
-    private final Pose pickup2Pose_lane3 = new Pose(118, 84, Math.toRadians(0));
-    private final Pose pickup3Pose_lane3 = new Pose(124, 84, Math.toRadians(0));
+    private final Pose pickup1Pose_lane3 = new Pose(13, 60, Math.toRadians(90));
+    private final Pose pickup2Pose_lane3 = new Pose(26, 84, Math.toRadians(180));
+    private final Pose pickup3Pose_lane3 = new Pose(20, 84, Math.toRadians(180));
 
-    private final Pose parkPose = new Pose(96, 70, Math.toRadians(45));
+    private final Pose parkPose = new Pose(48, 70, Math.toRadians(135));
+    private final Pose pickupPose_slider = new Pose(12, 50, Math.toRadians(140));
+    private final Pose pushPose_slider = new Pose(13, 68, Math.toRadians(135));
+    private final Pose pickupPose1_slider = new Pose(13, 67, Math.toRadians(90));
 
     // ---------------- Paths ----------------
     private Path scorePreload;
@@ -121,7 +135,7 @@ public class Red_RearHumanPlayer extends OpMode {
     private PathChain grabPickup1_lane1, grabPickup2_lane1, grabPickup3_lane1, scorePickup1,
             grabPickup1_lane2, grabPickup2_lane2, grabPickup3_lane2, scorePickup2,
             grabPickup1_lane3, grabPickup2_lane3, grabPickup3_lane3, scorePickup3,
-            park;
+            park,grabPickup_slider,scorePickupslider,push_slider,grabPickup1_slider;
 
     // ------------------- Intake helpers -------------------
     private void startLaneIntake() { IntakeMotor.setPower(pickupIntakePower); }
@@ -236,10 +250,10 @@ public class Red_RearHumanPlayer extends OpMode {
     public void buildPaths() {
 
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        // KEEP ROBOT HEADING STATIC (0deg)
-        scorePreload.setConstantHeadingInterpolation(Math.toRadians(0));
+        // KEEP ROBOT HEADING STATIC (180deg)
+        scorePreload.setConstantHeadingInterpolation(Math.toRadians(180));
 
-        double pickupHeading = Math.toRadians(0);
+        double pickupHeading = Math.toRadians(180);
 
         // lane 1 pickups
         grabPickup1_lane1 = follower.pathBuilder()
@@ -259,7 +273,7 @@ public class Red_RearHumanPlayer extends OpMode {
 
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane1, scorePose1))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         // lane 2 pickups
@@ -267,17 +281,16 @@ public class Red_RearHumanPlayer extends OpMode {
                 .addPath(new BezierLine(scorePose1, pickup1Pose_lane2))
                 .setConstantHeadingInterpolation(pickupHeading)
                 .build();
-        //grabPickup1_lane2 = follower.pathBuilder()
-                //.addPath(new BezierCurve((scorePose1),new Pose(134,24,0), (pickup1Pose_lane2)))
+        grabPickup1_lane2 = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose1, pickup1Pose_lane2))
+                .setConstantHeadingInterpolation(pickupHeading)
+                .build();
+       // grabPickup1_lane2 = follower.pathBuilder()
+              //  .addPath(new BezierCurve((scorePose1),new Pose(34,54, 180), (pickup1Pose_lane2)))
                 //.setTangentHeadingInterpolation()
                 // .setLinearHeadingInterpolation(scorePose1.getHeading(), pickup1Pose_lane2.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                // .build();
-
-        grabPickup2_lane2 = follower.pathBuilder()
-                .addPath(new BezierLine(pickup1Pose_lane2, pickup2Pose_lane2))
-                .setConstantHeadingInterpolation(pickupHeading)
-                .build();
 
         grabPickup3_lane2 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup2Pose_lane2, pickup3Pose_lane2))
@@ -286,7 +299,7 @@ public class Red_RearHumanPlayer extends OpMode {
 
         scorePickup2 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane2, scorePose1))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         // lane 3 pickups
@@ -297,8 +310,8 @@ public class Red_RearHumanPlayer extends OpMode {
                 // .setLinearHeadingInterpolation(scorePose1.getHeading(),pickup1Pose_lane3.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
                 .build();
-        //grabPickup1_lane3 = follower.pathBuilder()
-               // .addPath(new BezierCurve((scorePose1), new Pose(134,24, 0),(pickup1Pose_lane3)))
+       // grabPickup1_lane3 = follower.pathBuilder()
+               // .addPath(new BezierCurve((scorePose1), new Pose(34,54),(pickup1Pose_lane3)))
                 //.setTangentHeadingInterpolation(),
                 // .setLinearHeadingInterpolation(scorePose1.getHeading(),pickup1Pose_lane3.getHeading())
                 //.setLinearHeadingInterpolation(intake1Pose.getHeading(), pickup1Pose.getHeading())
@@ -316,7 +329,25 @@ public class Red_RearHumanPlayer extends OpMode {
 
         scorePickup3 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup3Pose_lane3, scorePose2))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
+                .build();
+
+        push_slider= follower.pathBuilder()
+                .addPath(new BezierLine(scorePose2, pushPose_slider))
+                .setLinearHeadingInterpolation(scorePose2.getHeading(),pushPose_slider.getHeading())
+                .build();
+        grabPickup_slider= follower.pathBuilder()
+                .addPath(new BezierLine( pushPose_slider, pickupPose_slider))
+                .setLinearHeadingInterpolation( pushPose_slider.getHeading(), pickupPose_slider.getHeading())
+                .build();
+        grabPickup1_slider= follower.pathBuilder()
+                .addPath(new BezierLine( pickupPose_slider, pickupPose1_slider))
+                .setLinearHeadingInterpolation(pickupPose_slider.getHeading(), pickupPose1_slider.getHeading())
+                //.setConstantHeadingInterpolation(Math.toRadians(pickupPose_slider.getHeading()))
+                .build();
+        scorePickupslider = follower.pathBuilder()
+                .addPath(new BezierLine(pickupPose1_slider,scorePose2))
+                .setLinearHeadingInterpolation(pickupPose1_slider.getHeading(), scorePose2.getHeading())
                 .build();
 
         park = follower.pathBuilder()
@@ -332,7 +363,7 @@ public class Red_RearHumanPlayer extends OpMode {
             case 0:
                 follower.setMaxPower(power_shooting);
 
-                // FIX: if preload path is basically zero-length, skip it
+                // If preload path is basically zero-length, skip it
                 if (dist(startPose, scorePose) < 0.5) {
                     setPathState(1);
                 } else {
@@ -345,13 +376,13 @@ public class Red_RearHumanPlayer extends OpMode {
                 follower.setMaxPower(power_shooting);
 
                 if (!follower.isBusy()) {
-                    // IMPORTANT: don't shoot until shooter reaches velocity
+                    // Don't shoot until shooter reaches velocity
                     waitForShooterReady(SHOOTER_READY_TOL, SHOOTER_READY_TIMEOUT);
 
                     // preload scoring: ALWAYS 3 cycles
                     doBeamGatedTransfers(SHOT_CYCLES, 1.0);
 
-                    // AFTER PRELOAD: turret stays at -75
+                    // AFTER PRELOAD: turret stays at +78 (mirrored)
                     setTurretDeg(TURRET_AFTER_PRELOAD_DEG);
 
                     // Start lane 1 pickup: intake ON while driving
@@ -422,7 +453,7 @@ public class Red_RearHumanPlayer extends OpMode {
 
             case 8:
                 follower.setMaxPower(power_pickup);
-                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
+                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 1.5) {
                     stopLaneIntake();
 
                     follower.setMaxPower(power_shooting);
@@ -441,22 +472,23 @@ public class Red_RearHumanPlayer extends OpMode {
                     startLaneIntake();
 
                     follower.setMaxPower(power_pickup);
-                    follower.followPath(grabPickup1_lane3, true);
-                    setPathState(12);
+                    follower.followPath(push_slider, true);
+                    setPathState(10);
                 }
                 opmodeTimer.resetTimer();
                 break;
 
             case 10:
                 if (!follower.isBusy()) {
-                    follower.followPath(grabPickup2_lane3, true);
+                    follower.followPath(grabPickup_slider, true);
                     setPathState(11);
                 }
                 break;
 
             case 11:
                 if (!follower.isBusy()) {
-                    follower.followPath(grabPickup3_lane3, true);
+                    safeWaitIntakeSeconds(0.25);
+                    follower.followPath(grabPickup1_slider, true);
                     setPathState(12);
                 }
                 opmodeTimer.resetTimer();
@@ -465,11 +497,11 @@ public class Red_RearHumanPlayer extends OpMode {
             case 12:
                 follower.setMaxPower(power_pickup);
 
-                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 2) {
+                if (!follower.isBusy() || opmodeTimer.getElapsedTimeSeconds() > 1.5) {
                     stopLaneIntake();
 
                     follower.setMaxPower(power_shooting);
-                    follower.followPath(scorePickup3, true);
+                    follower.followPath(scorePickupslider, true);
                     setPathState(13);
                 }
                 break;
@@ -496,7 +528,14 @@ public class Red_RearHumanPlayer extends OpMode {
         pathState = pState;
         pathTimer.resetTimer();
     }
-
+    public void safeWaitIntakeSeconds(double time) {
+        ElapsedTime timer = new ElapsedTime(SECONDS);
+        timer.reset();
+        while (timer.time() < time) {
+            updateShooterPID();
+            IntakeMotor.setPower(pickupIntakePower);
+        }
+    }
     @Override
     public void loop() {
         updateShooterPID();
@@ -541,16 +580,15 @@ public class Red_RearHumanPlayer extends OpMode {
         beamBreakSensor = hardwareMap.get(DigitalChannel.class, "breakbeam");
         beamBreakSensor.setMode(DigitalChannel.Mode.INPUT);
 
-        // --- CHANGED: do NOT raise kicker in init ---
-        // Keep kicker DOWN in init so it doesn't pop up before start
+        // Do NOT raise kicker in init
         ballStopper.setPosition(ballkicker_down);
 
         hood.setPosition(0.24);
 
-        // default: intake off until we enter lane pickups
+        // intake off until lane pickups
         IntakeMotor.setPower(0.0);
 
-        // INIT: turret -> -75 deg
+        // INIT: turret -> +78 deg (mirrored)
         setTurretDeg(TURRET_INIT_DEG);
 
         b = new PIDFController(new PIDFCoefficients(bp, 0, bd, bf));
@@ -563,7 +601,7 @@ public class Red_RearHumanPlayer extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        targetvel = farvelocity; // make it explicit on start
+        targetvel = farvelocity; // explicit on start
         setPathState(0);
     }
 
@@ -574,3 +612,4 @@ public class Red_RearHumanPlayer extends OpMode {
         if (ShooterMotor != null) ShooterMotor.setPower(0.0);
     }
 }
+
