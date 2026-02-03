@@ -1,0 +1,409 @@
+package org.firstinspires.ftc.teamcode.Auton;
+
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.PathChain;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.teamcode.Pedro.Constants;
+import org.firstinspires.ftc.teamcode.Subsystem.Shooter;
+
+@Autonomous(name = "Blue_RearHumanPlayer_SIMPLE", group = "Auton")
+public class Blue_RearHumanPlayer_PP_vB_5shoots_UPDATED extends OpMode {
+
+    // ---------------- Pedro ----------------
+    private Follower follower;
+
+    // ---------------- Hardware ----------------
+    private Servo ballStopper = null; // "ballKick"
+    private Servo hood = null;        // "hood"
+    private Servo turret = null;      // "turret"
+    private DcMotor intake = null;    // "intake"
+    private DigitalChannel beam = null; // "breakbeam"
+
+    // ---------------- Shooter Subsystem ----------------
+    private Shooter shooter = null;
+
+    // ---------------- Turret ----------------
+    private static final String TURRET_SERVO_NAME = "turret";
+    private static final double TURRET_CENTER_POS = 0.47;
+    private static final double TURRET_DEG_PER_POS = 355.0;
+    private static final double TURRET_INIT_DEG = -80;
+
+    private static double turretDegToServoPos(double turretDeg) {
+        double servoPos = TURRET_CENTER_POS + (turretDeg / TURRET_DEG_PER_POS);
+        return Range.clip(servoPos, 0.0, 1.0);
+    }
+
+    private void setTurretDeg(double deg) {
+        if (turret != null) turret.setPosition(turretDegToServoPos(deg));
+    }
+
+    // ---------------- Shooter Targets ----------------
+    private double targetTPS = 0.0;
+    private static final double PRELOAD_TPS = 1550;
+    private static final double SCORE_TPS   = 1650;
+    private static final double READY_TOL   = 120;
+
+    private boolean shooterAtSpeed() {
+        if (shooter == null) return false;
+        return Math.abs(targetTPS - shooter.getCurrentVelocity()) <= READY_TOL;
+    }
+
+    // ---------------- Breakbeam ----------------
+    // Active-low: false = broken
+    private boolean isBeamBroken() {
+        return beam != null && !beam.getState();
+    }
+
+    // ---------------- Intake ----------------
+    private static final double INTAKE_PICKUP = -1.0;
+    private static final double INTAKE_SEARCH = -0.4;
+    private static final double INTAKE_TRANSFER = -1.0;
+
+    private void intakeOn()  { if (intake != null) intake.setPower(INTAKE_PICKUP); }
+    private void intakeOff() { if (intake != null) intake.setPower(0.0); }
+
+    // ---------------- Kicker / Feeder (non-blocking) ----------------
+    private double ballkicker_up = 0.22;
+    private double ballkicker_down = 0.5;
+
+    private double waitKickUp = 0.23;
+    private double waitTransfer = 0.20;
+
+    private enum FeedPhase { IDLE, KICK_UP, KICK_DOWN_WAIT_BEAM, SETTLE }
+    private FeedPhase feedPhase = FeedPhase.IDLE;
+    private int feedCyclesRemaining = 0;
+    private double phaseStartSec = 0;
+
+    private void startFeeder(int cycles) {
+        feedCyclesRemaining = cycles;
+        feedPhase = FeedPhase.KICK_UP;
+        phaseStartSec = getRuntime();
+        intakeOff();
+        if (ballStopper != null) ballStopper.setPosition(ballkicker_up);
+    }
+
+    private boolean updateFeeder() {
+        if (feedPhase == FeedPhase.IDLE) return true;
+
+        double now = getRuntime();
+
+        switch (feedPhase) {
+            case KICK_UP:
+                if ((now - phaseStartSec) >= waitKickUp) {
+                    if (ballStopper != null) ballStopper.setPosition(ballkicker_down);
+                    feedPhase = FeedPhase.KICK_DOWN_WAIT_BEAM;
+                    phaseStartSec = now;
+                }
+                break;
+
+            case KICK_DOWN_WAIT_BEAM:
+                if (isBeamBroken()) {
+                    if (intake != null) intake.setPower(INTAKE_TRANSFER);
+                    feedPhase = FeedPhase.SETTLE;
+                    phaseStartSec = now;
+                } else {
+                    if (intake != null) intake.setPower(INTAKE_SEARCH);
+                }
+
+                // safety: don't hang forever waiting for beam
+                if ((now - phaseStartSec) > 1.0) {
+                    feedPhase = FeedPhase.SETTLE;
+                    phaseStartSec = now;
+                }
+                break;
+
+            case SETTLE:
+                if ((now - phaseStartSec) >= waitTransfer) {
+                    intakeOff();
+                    feedCyclesRemaining--;
+                    if (feedCyclesRemaining <= 0) {
+                        if (ballStopper != null) ballStopper.setPosition(ballkicker_down);
+                        feedPhase = FeedPhase.IDLE;
+                        return true;
+                    } else {
+                        if (ballStopper != null) ballStopper.setPosition(ballkicker_up);
+                        feedPhase = FeedPhase.KICK_UP;
+                        phaseStartSec = now;
+                    }
+                }
+                break;
+        }
+
+        return false;
+    }
+
+    // ---------------- Paths ----------------
+    private Pose startPose;
+    private Pose[] ends;
+    private PathChain[] paths;
+
+    private void buildPaths() {
+        startPose = new Pose(58, 9, Math.toRadians(180));
+
+        ends = new Pose[] {
+                new Pose(17, 13, Math.toRadians(180)),  // 0
+                new Pose(20, 13, Math.toRadians(180)),  // 1
+                new Pose(58, 13, Math.toRadians(180)),  // 2
+                new Pose(15, 13, Math.toRadians(180)),  // 3
+                new Pose(58, 13, Math.toRadians(180)),  // 4
+                new Pose(17, 13, Math.toRadians(180)),  // 5  <-- delay before starting this
+                new Pose(20, 13, Math.toRadians(180)),  // 6
+                new Pose(17, 13, Math.toRadians(180)),  // 7
+                new Pose(58, 13, Math.toRadians(180)),  // 8
+                new Pose(18, 13, Math.toRadians(180)),  // 9
+                new Pose(58, 13, Math.toRadians(180)),  // 10
+                new Pose(23, 13, Math.toRadians(180)),  // 11
+        };
+
+        paths = new PathChain[ends.length];
+
+        Pose cur = startPose;
+        for (int i = 0; i < ends.length; i++) {
+            Pose next = ends[i];
+
+            // If your Pedro build errors here, switch to points:
+            // new BezierLine(cur.getPoint(), next.getPoint())
+            paths[i] = follower.pathBuilder()
+                    .addPath(new BezierLine(cur, next))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
+                    .build();
+
+            cur = next;
+        }
+    }
+
+    // ---------------- SIMPLE program steps ----------------
+    private enum StepType { DRIVE, SHOOT }
+
+    private static class Step {
+        StepType type;
+        int pathIndex;      // for DRIVE
+        double shootTPS;    // for SHOOT
+        int cycles;         // for SHOOT
+
+        private Step(StepType type, int pathIndex, double shootTPS, int cycles) {
+            this.type = type;
+            this.pathIndex = pathIndex;
+            this.shootTPS = shootTPS;
+            this.cycles = cycles;
+        }
+
+        static Step drive(int pathIndex) { return new Step(StepType.DRIVE, pathIndex, 0, 0); }
+        static Step shoot(double tps, int cycles) { return new Step(StepType.SHOOT, -1, tps, cycles); }
+    }
+
+    private Step[] program;
+    private int stepIdx = 0;
+    private boolean stepStarted = false;
+
+    // ---------------- (4) Between-path delay flags ----------------
+    private static final int DELAY_BEFORE_PATH_INDEX = 5;        // delay before starting DRIVE step for path 5
+    private static final double DELAY_SECONDS = 3.0;
+
+    private boolean delayActive = false;
+    private double delayStartSec = 0.0;
+    private boolean delayDoneBeforeIndex5 = false;
+
+    // ---------------- (3) Follower timeout cancelling ----------------
+    private static final double DRIVE_TIMEOUT_SEC = 3.0;
+    private double driveStartSec = 0.0;
+
+    private void buildProgram() {
+        program = new Step[] {
+                Step.shoot(PRELOAD_TPS, 3), // preload
+                Step.drive(0),
+                Step.drive(1),
+                Step.drive(2),
+                Step.shoot(SCORE_TPS, 3),
+                Step.drive(3),
+                Step.drive(4),
+                Step.shoot(SCORE_TPS, 3),
+                Step.drive(5),
+                Step.drive(6),
+                Step.drive(7),
+                Step.drive(8),
+                Step.shoot(SCORE_TPS, 3),
+                Step.drive(9),
+                Step.drive(10),
+                Step.shoot(SCORE_TPS, 3),
+                Step.drive(11),
+        };
+    }
+
+    // ---------- follower cancel via reflection (compiles on any Pedro build) ----------
+    private boolean invokeFollowerMethod(String name) {
+        try {
+            java.lang.reflect.Method m = follower.getClass().getMethod(name);
+            m.setAccessible(true);
+            m.invoke(follower);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void cancelFollower() {
+        if (invokeFollowerMethod("breakFollowing")) return;
+        if (invokeFollowerMethod("cancelFollowing")) return;
+        if (invokeFollowerMethod("stopFollowing")) return;
+        if (invokeFollowerMethod("stop")) return;
+        if (invokeFollowerMethod("reset")) return;
+        // If none exist, we just can't force-cancel in this Pedro build.
+    }
+
+    private void startStep(Step s) {
+        stepStarted = true;
+
+        if (s.type == StepType.DRIVE) {
+            // (4) Delay BEFORE starting path 5 (only once)
+            if (s.pathIndex == DELAY_BEFORE_PATH_INDEX && !delayDoneBeforeIndex5) {
+                delayActive = true;
+                delayStartSec = getRuntime();
+                // Do NOT start follower yet. updateStep will start it when delay finishes.
+                return;
+            }
+
+            intakeOn();
+            follower.followPath(paths[s.pathIndex], true);
+            driveStartSec = getRuntime(); // (3) start timeout timer
+        } else {
+            intakeOff();
+            targetTPS = s.shootTPS;
+            shooter.setVelocity(targetTPS);
+            // feeder starts when shooter is ready (in updateStep)
+        }
+    }
+//check this one
+    private void updateStep(Step s) {
+        // If we started a DRIVE step that requires delay, handle delay first
+        if (s.type == StepType.DRIVE && s.pathIndex == DELAY_BEFORE_PATH_INDEX && delayActive) {
+            double elapsed = getRuntime() - delayStartSec;
+            if (elapsed >= DELAY_SECONDS) {
+                delayActive = false;
+                delayDoneBeforeIndex5 = true;
+
+                // Now actually start the drive
+                intakeOn();
+                follower.followPath(paths[s.pathIndex], true);
+                driveStartSec = getRuntime(); // timeout timer starts when path really starts
+            }
+            return; // still delaying (or just started it this loop)
+        }
+
+        if (s.type == StepType.DRIVE) {
+            // (3) Timeout skip: if follower never finishes, cancel + advance
+            if (follower.isBusy()) {
+                double elapsed = getRuntime() - driveStartSec;
+                if (elapsed >= DRIVE_TIMEOUT_SEC) {
+                    cancelFollower();
+                    stepStarted = false;
+                    stepIdx++;
+                }
+                return;
+            }
+
+            // Finished normally
+            stepStarted = false;
+            stepIdx++;
+            return;
+        }
+
+        // SHOOT step:
+        if (hood != null) hood.setPosition(0.24);
+
+        if (shooterAtSpeed()) {
+            if (feedPhase == FeedPhase.IDLE) startFeeder(s.cycles);
+
+            if (updateFeeder()) {
+                stepStarted = false;
+                stepIdx++;
+            }
+        } else {
+            // just keep waiting; shooter.periodic() is running
+        }
+    }
+
+    // ---------------- OpMode ----------------
+    @Override
+    public void init() {
+        follower = Constants.createFollower(hardwareMap);
+
+        ballStopper = hardwareMap.get(Servo.class, "ballKick");
+        hood = hardwareMap.get(Servo.class, "hood");
+        turret = hardwareMap.get(Servo.class, TURRET_SERVO_NAME);
+        intake = hardwareMap.dcMotor.get("intake");
+
+        beam = hardwareMap.get(DigitalChannel.class, "breakbeam");
+        beam.setMode(DigitalChannel.Mode.INPUT);
+
+        shooter = new Shooter(hardwareMap, "shooter", telemetry);
+
+        buildPaths();
+        follower.setStartingPose(startPose);
+
+        buildProgram();
+
+        if (ballStopper != null) ballStopper.setPosition(ballkicker_down);
+        if (hood != null) hood.setPosition(0.24);
+        setTurretDeg(TURRET_INIT_DEG);
+        intakeOff();
+
+        // reset program
+        stepIdx = 0;
+        stepStarted = false;
+        targetTPS = 0.0;
+        shooter.stop();
+
+        // reset delay flags
+        delayActive = false;
+        delayDoneBeforeIndex5 = false;
+    }
+
+    @Override
+    public void loop() {
+        shooter.periodic();
+        follower.update();
+
+        if (stepIdx >= program.length) {
+            intakeOff();
+            shooter.stop();
+            if (ballStopper != null) ballStopper.setPosition(ballkicker_down);
+            telemetry.addLine("DONE");
+        } else {
+            Step s = program[stepIdx];
+            if (!stepStarted) startStep(s);
+            updateStep(s);
+        }
+
+        telemetry.addData("stepIdx", stepIdx);
+        telemetry.addData("stepStarted", stepStarted);
+        telemetry.addData("busy", follower.isBusy());
+
+        telemetry.addData("delayActive", delayActive);
+        telemetry.addData("delayDoneBeforeIndex5", delayDoneBeforeIndex5);
+
+        telemetry.addData("targetTPS", targetTPS);
+        telemetry.addData("shooterTPS", shooter.getCurrentVelocity());
+
+        telemetry.addData("beamBroken", isBeamBroken());
+        telemetry.addData("feedPhase", feedPhase);
+        telemetry.addData("feedCyclesRemaining", feedCyclesRemaining);
+
+        telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        intakeOff();
+        if (shooter != null) shooter.stop();
+    }
+}
